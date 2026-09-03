@@ -1,10 +1,10 @@
 [
     {
-        "jarFileSize": 240609,
-        "fileHash": "sha256-b0590cfc936205a9e19bb3d5deee08d77a149034f06a4d95202b24834db9d81b",
+        "jarFileSize": 265001,
+        "fileHash": "sha256-b0b55454db0c401b68ac5bb8bfb8e813f2478ba08d3e59fe2589adb388884fcf",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/Banchon999/Thai-Movie-Extension",
-        "fileSize": 61462,
+        "fileSize": 66573,
         "status": 3,
         "language": "th",
         "authors": [
@@ -14,12 +14,12 @@
             "Movie",
             "TvSeries"
         ],
-        "version": 6,
+        "version": 7,
         "internalName": "TwentyFiveHD",
         "jarUrl": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.jar",
-        "description": "25-HD \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e04\u0e49\u0e19\u0e2b\u0e32 25hd-debug \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39 HTTP \u0e17\u0e35\u0e48\u0e15\u0e31\u0e27\u0e40\u0e25\u0e48\u0e19\u0e23\u0e49\u0e2d\u0e07\u0e02\u0e2d\u0e41\u0e25\u0e49\u0e27\u0e25\u0e49\u0e21\u0e40\u0e2b\u0e25\u0e27",
+        "description": "25-HD \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e2a\u0e48\u0e07\u0e04\u0e33\u0e02\u0e2d\u0e2a\u0e37\u0e48\u0e2d\u0e17\u0e35\u0e48\u0e40\u0e01\u0e15\u0e40\u0e27\u0e22\u0e4c ZMDB \u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18 (403) \u0e44\u0e1b\u0e22\u0e31\u0e07\u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c CDN \u0e17\u0e35\u0e48 playlist \u0e23\u0e30\u0e1a\u0e38\u0e44\u0e27\u0e49 \u0e04\u0e49\u0e19\u0e2b\u0e32 25hd-debug \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39\u0e23\u0e32\u0e22\u0e07\u0e32\u0e19\u0e01\u0e32\u0e23\u0e40\u0e25\u0e48\u0e19",
         "url": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.cs3",
         "name": "TwentyFiveHD",
-        "jarHash": "sha256-7204475379324eef3b9917dc9bf11a983b36381767a3a9329215da24be67e603"
+        "jarHash": "sha256-c701b431dcbef680eaa7bacf460d4163c6f665ea009bf2c1ef7028b52ac44899"
     }
 ]
