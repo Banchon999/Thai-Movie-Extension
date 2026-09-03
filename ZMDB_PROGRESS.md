@@ -33,5 +33,7 @@ Not yet implemented or verified:
 - Android playback. The developer browser remains blocked at ZMDB, and direct stream037 navigation
   returned an unauthorized-source denial. No access-control bypass was attempted.
 
-Validation: pending pull-request CI (7 new JSON-contract tests plus the 16 existing parser cases).
+Validation: GitHub Actions run 33765073964 passed 23 Kotlin parser cases (7 new, 16 existing),
+5 Python release tests, CS3/JAR compilation and compatibility validation. Publication was skipped.
+https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33765073964
 This is a draft implementation, not a new published plugin release. The published installer remains version 3.
