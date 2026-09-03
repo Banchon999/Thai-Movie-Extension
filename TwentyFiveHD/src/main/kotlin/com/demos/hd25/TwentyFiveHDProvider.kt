@@ -129,8 +129,8 @@ class TwentyFiveHDProvider : MainAPI() {
         val emit: (ExtractorLink) -> Unit = { link -> if (sent.add(link.url)) callback(link) }
         val emitSubtitle: (SubtitleFile) -> Unit = { sub -> if (subtitles.add(sub.url)) subtitleCallback(sub) }
 
-        suspend fun direct(url: String, referer: String, label: String = "") {
-            emit(newExtractorLink(name, label.ifBlank { name }, url) {
+        suspend fun direct(url: String, referer: String, label: String = "", type: ExtractorLinkType? = null) {
+            emit(newExtractorLink(name, label.ifBlank { name }, url, type = type) {
                 this.referer = referer
                 headers = requestHeaders
                 quality = getQualityFromName(label)
@@ -149,6 +149,13 @@ class TwentyFiveHDProvider : MainAPI() {
             val current = pending.removeFirst()
             if (!visited.add(current.url)) continue
             try {
+                if (ZmdbPayload.isVideoApi(current.url)) {
+                    val response = app.get(current.url, headers = requestHeaders, referer = current.referer, timeout = 25)
+                    if (response.code !in 200..299) throw ErrorLoadingException("ZMDB video API: HTTP ${response.code}")
+                    val video = ZmdbPayload.video(response.text)
+                    direct(video.hlsUrl, current.referer, type = ExtractorLinkType.M3U8)
+                    continue
+                }
                 if (SiteParser.isMedia(current.url)) {
                     direct(current.url, current.referer)
                     continue

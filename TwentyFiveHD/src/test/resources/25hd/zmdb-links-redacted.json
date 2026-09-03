@@ -1,0 +1,22 @@
+{
+  "episodeNumber": 7,
+  "linkToken": "REDACTED-NOT-A-CREDENTIAL",
+  "playerEmbedLinks": [
+    {
+      "embedUrl": "https://stream037.com/play/000000000000000000000001?audio=tha&subtitle=none",
+      "isVipOnly": false,
+      "language": "พากย์ไทย",
+      "qualityLabel": "FHD",
+      "serverLabel": "Server 1"
+    },
+    {
+      "embedUrl": "https://stream037.com/play/000000000000000000000001?audio=eng&subtitle=tha",
+      "isVipOnly": false,
+      "language": "ซับไทย",
+      "qualityLabel": "FHD",
+      "serverLabel": "Server 1"
+    }
+  ],
+  "seasonNumber": 1,
+  "success": true
+}
