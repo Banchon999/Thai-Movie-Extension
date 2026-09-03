@@ -4,9 +4,13 @@ User confirmed v5 still returns Media3 IO_BAD_HTTP_STATUS (2004). Actual HTTP re
 
 Changes: replace the extra master preflight with an in-memory playback interceptor report. Search `25hd-debug` in 25-HD after failure to view it. The local report page performs no network request and each search creates a fresh report URL to avoid cached detail pages.
 
-Initial run 33774565832 compiled but three MockWebServer cases failed at construction with NoClassDefFoundError. The first replacement used jdk.httpserver, which the Android compile SDK does not expose (run 33774909326). Final tests use a loopback GET server based on java.net.ServerSocket; production code is unchanged. Validation pending GitHub Actions: six local HTTP server/unit tests cover child HTTP failure, unchanged body/headers, no extra requests, redirects, key/master classification, partial success, exception-message redaction, bounded sessions and an empty report. Five Python release tests passed locally. Existing parser/client checks are retained.
+Initial run 33774565832 compiled but three MockWebServer cases failed at construction with NoClassDefFoundError. The first replacement used jdk.httpserver, which the Android compile SDK does not expose (run 33774909326). Final tests use a loopback GET server based on java.net.ServerSocket; production code is unchanged. Validation passed on final source commit `2fb466b16a5cf7e285b7902acaecb9ba78eb3d5f`: 43 Kotlin tests and 5 Python release tests; CS3/JAR generation and ensureJarCompatibility passed. Six local HTTP server/unit tests cover child HTTP failure, unchanged body/headers, no extra requests, redirects, key/master classification, partial success, exception-message redaction, bounded sessions and an empty report. Five Python release tests passed locally. Existing parser/client checks are retained.
 
 The upstream interceptor hook selects OkHttp instead of Cronet. No server policy or authentication changes are made. Android playback and report visibility still require user testing; casting/downloads may not use this hook. Prior v5 preflight helper tests are retained but that helper is no longer called by the provider.
+
+Successful build and publication: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33775153471
+
+Published metadata verified version=6, status=3. CS3: 61,462 bytes, SHA-256 `b0590cfc936205a9e19bb3d5deee08d77a149034f06a4d95202b24834db9d81b`. JAR: 240,609 bytes, SHA-256 `7204475379324eef3b9917dc9bf11a983b36381767a3a9329215da24be67e603`.
 
 ---
 
