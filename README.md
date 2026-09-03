@@ -1,9 +1,22 @@
 # Cloudstream · 25-HD ภาษาไทย
 
-**สถานะ: ซอร์สเวอร์ชันทดลอง ยังไม่ยืนยันว่าเล่นกับเว็บจริงได้**
+**สถานะ: บิลด์และเผยแพร่เวอร์ชันทดลองแล้ว ยังไม่ยืนยันการเล่นกับเว็บจริง**
 
 โปรเจกต์ส่วนขยายสำหรับ `https://25-hd.com/` ชื่อในแอปคือ **25-HD (ทดลอง)**
-นี่คือซอร์สโปรเจกต์ Kotlin ไม่ใช่ APK และ ZIP ชุดนี้ไม่ใช่ไฟล์ `.cs3` ที่ติดตั้งได้ทันที
+ซอร์สอยู่บน branch `main` และไฟล์ติดตั้งอยู่บน branch `builds`
+
+## ติดตั้งใน Cloudstream
+
+เปิด **Settings → Extensions → Add repository** แล้วใส่ลิงก์:
+
+```text
+https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/repo.json
+```
+
+ดาวน์โหลด **TwentyFiveHD** แล้วเลือก **25-HD (ทดลอง)**
+หรือดาวน์โหลด [TwentyFiveHD.cs3](https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.cs3) โดยตรง
+
+[ผลบิลด์ที่ผ่าน](https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33750191854) · [ผลตรวจสอบ](TEST_REPORT.md)
 
 ## สิ่งที่เขียนไว้
 

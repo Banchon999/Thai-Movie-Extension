@@ -1,22 +1,33 @@
 # Validation — 2026-09-03
 
+Source commit: `fb29131785f2317f826286cfadb327df1f11ca9b`
+
+Successful workflow: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33750191854
+
 | Check | Result |
 | --- | --- |
-| GitHub connection | Authenticated account Banchon999 accessible; target Banchon999/Thai-Movie-Extension identified |
-| Live 25-hd.com inspection | Blocked by HTTP 403; no site HTML obtained |
-| Cloudstream API review | Read current upstream MainAPI, ExtractorApi, BasePlugin example and Gradle metadata source |
-| Python release tests | PASS: 5 tests |
-| Kotlin parser tests | 7 synthetic-fixture tests included; NOT RUN |
-| Kotlin compilation | NOT RUN: no usable Gradle/Android SDK; tool download did not complete |
-| CS3 / JAR generation | NOT RUN; no installable binary in this source ZIP |
-| GitHub Actions run | Initial build pending on Banchon999/Thai-Movie-Extension |
+| Source publication | PASS — Banchon999/Thai-Movie-Extension, main branch |
+| Python release tests | PASS — 5 tests on GitHub Actions |
+| Kotlin parser tests | PASS — testDebugUnitTest; 7 synthetic-fixture cases |
+| Kotlin compilation | PASS — JDK 17, Gradle 8.12, Android SDK 35 |
+| CS3 generation | PASS — TwentyFiveHD.cs3, 36,414 bytes |
+| JAR generation / compatibility | PASS — TwentyFiveHD.jar, 131,728 bytes; ensureJarCompatibility passed |
+| Release validation | PASS — DEX header, plugin manifest, file sizes and SHA-256 hashes |
+| Publish workflow | PASS — build and publish jobs completed successfully |
+| Public repository manifests | PASS — repo.json and plugins.json fetched from builds branch |
+| First publish / repeat behavior | PASS — locally exercised the workflow's publishing script with a temporary bare Git repository |
+| Live 25-hd.com inspection | HTTP 403 in the development environment; no site HTML obtained |
 | Android playback | NOT TESTED |
 
-The Python tests verify release staging only: fork URL correctness, binary size/hash matching,
-required CS3 entries, invalid repository rejection, and rejection of a source ZIP renamed to CS3.
-They do not verify provider selectors, Kotlin compilation, DEX validity beyond its header, or video playback.
+Published CS3 SHA-256:
+`0b472a903383627f47f0d11eff055b8b7d0372cece1871745260766e9d9dbb41`
 
-All HTML used by the Kotlin tests is synthetic. These fixtures are explicitly not captured from 25-hd.com.
-Provider metadata remains status=3 (beta). Do not mark stable until build and live playback succeed.
+The Python tests verify release staging, not provider functionality. The Kotlin tests verify
+parser behavior against synthetic HTML, not the current 25-hd.com website.
 
-Source is being submitted to Banchon999/Thai-Movie-Extension. Live-site evidence and playback verification remain outstanding.
+The initial build caught an incorrect trailing lambda in newEpisode(). The successful build
+uses an explicitly named initializer argument and preserves fix=false for serialized playback data.
+
+The source now compiles and produces installable artifacts. This does not establish successful
+playback: live HTML, actual selectors, episode behavior and player extraction still require testing.
+Provider metadata remains status=3 (beta). Do not mark stable until live playback succeeds.
