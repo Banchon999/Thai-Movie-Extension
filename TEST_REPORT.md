@@ -1,3 +1,19 @@
+# Version 5 diagnostics — 2026-09-03
+
+User screenshot: Cloudstream reports `ERROR_CODE_IO_BAD_HTTP_STATUS (2004)`.
+This is a player error code, not the origin server's HTTP response status. The actual HTTP status,
+failed host and failed resource (master/variant/key/segment) cannot be identified from that screenshot.
+
+Changes: preflight explicit ZMDB HLS masters with the existing playback headers; reject non-2xx
+responses and HTTP-200 non-HLS bodies before emitting a link. Report actual status and host while
+omitting signed paths, queries and response bodies. A failed master does not skip another declared server.
+
+Limits: this adds one GET before playback; single-use URLs may need different handling. It does not
+inspect variants, keys or segments and is not a confirmed playback fix. No live blocked-site requests
+were made in development, and no header/domain changes were guessed.
+
+Validation: pending version 5 CI (37 Kotlin cases including 4 new HLS diagnostic cases).
+
 # Version 4 validation — 2026-09-03
 
 ZMDB bootstrap-to-HLS integration using user-supplied response contracts. Tokens are fetched anew

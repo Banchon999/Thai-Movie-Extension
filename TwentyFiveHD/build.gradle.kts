@@ -1,7 +1,7 @@
-version = 4
+version = 5
 
 cloudstream {
-    description = "25-HD ภาษาไทย — อ่านตอน ZMDB จาก bootstrap และดึง HLS ผ่าน API (ทดลอง ยังต้องทดสอบการเล่นบนเครื่องจริง)"
+    description = "25-HD ทดลอง — อ่านตอน ZMDB และตรวจ HLS เพื่อรายงาน HTTP จริงเมื่อเล่นไม่ได้"
     authors = listOf("Banchon999")
     language = "th"
     status = 3 // Beta: real markup verified; ZMDB playback is still unverified.

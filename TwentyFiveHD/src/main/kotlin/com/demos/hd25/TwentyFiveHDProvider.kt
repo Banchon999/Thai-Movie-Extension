@@ -149,6 +149,12 @@ class TwentyFiveHDProvider : MainAPI() {
         val emitSubtitle: (SubtitleFile) -> Unit = { sub -> if (subtitles.add(sub.url)) subtitleCallback(sub) }
 
         suspend fun direct(url: String, referer: String, label: String = "", type: ExtractorLinkType? = null) {
+            if (type == ExtractorLinkType.M3U8) {
+                // Validate the ZMDB master using the same headers that will be passed to playback.
+                // A player error 2004 hides the real HTTP status; surface it before emitting the link.
+                val response = app.get(url, headers = requestHeaders, referer = referer, timeout = 15)
+                HlsCheck.validate(response.code, response.text, response.url)
+            }
             emit(newExtractorLink(name, label.ifBlank { name }, url, type = type) {
                 this.referer = referer
                 headers = requestHeaders
@@ -170,7 +176,14 @@ class TwentyFiveHDProvider : MainAPI() {
             try {
                 if (ZmdbPayload.isEmbed(current.url)) {
                     val streams = zmdb.resolve(current.url, current.referer, input.season, input.episode)
-                    streams.forEach { direct(it.url, it.referer, "ZMDB ${it.server} • Auto", ExtractorLinkType.M3U8) }
+                    for (stream in streams) {
+                        try {
+                            direct(stream.url, stream.referer, "ZMDB ${stream.server} • Auto", ExtractorLinkType.M3U8)
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            lastFailure = e.message
+                        }
+                    }
                     continue
                 }
                 if (ZmdbPayload.isVideoApi(current.url)) {
