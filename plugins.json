@@ -1,0 +1,25 @@
+[
+    {
+        "jarFileSize": 131728,
+        "fileHash": "sha256-0b472a903383627f47f0d11eff055b8b7d0372cece1871745260766e9d9dbb41",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/Banchon999/Thai-Movie-Extension",
+        "fileSize": 36414,
+        "status": 3,
+        "language": "th",
+        "authors": [
+            "Banchon999"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "TwentyFiveHD",
+        "jarUrl": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.jar",
+        "description": "25-HD \u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22 \u2014 experimental, site playback not yet verified",
+        "url": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.cs3",
+        "name": "TwentyFiveHD",
+        "jarHash": "sha256-30a2d422fdda857aa36d16c4bf3287bb901b71b003bdbc1e624d4d0fc4f38ae2"
+    }
+]

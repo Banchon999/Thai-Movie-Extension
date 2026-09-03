@@ -1,0 +1,8 @@
+{
+  "name": "DEMOS · 25-HD (ทดลอง)",
+  "description": "Cloudstream provider for 25-hd.com — experimental",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/plugins.json"
+  ]
+}
