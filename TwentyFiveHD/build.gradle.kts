@@ -1,10 +1,10 @@
-version = 1
+version = 2
 
 cloudstream {
-    description = "25-HD ภาษาไทย — experimental, site playback not yet verified"
+    description = "25-HD ภาษาไทย — แก้หน้าแรก/ค้นหาแล้ว, การเล่นและรายการตอน ZMDB ยังไม่ยืนยัน"
     authors = listOf("Banchon999")
     language = "th"
-    status = 3 // Beta: live HTML and playback still need verification.
+    status = 3 // Beta: real markup verified; ZMDB playback is still unverified.
     tvTypes = listOf("Movie", "TvSeries")
     isCrossPlatform = true
 }

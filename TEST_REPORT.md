@@ -1,4 +1,11 @@
-# Validation — 2026-09-03
+# Version 2 validation — 2026-09-03
+
+Version 2 fixes `.movie_box` cards, full search titles, movie-heading priority, metadata and deferred iframe discovery.
+Browser inspection succeeded for the homepage (54 cards), Thai search (3 results), empty search, movie and series pages.
+Five captured-markup regression tests were added. Version 2 build results will be recorded after CI completes.
+ZMDB returned a Cloudflare security block; playback and external TV episode enumeration remain unverified.
+
+## Previous version 1 build record
 
 Source commit: `fb29131785f2317f826286cfadb327df1f11ca9b`
 

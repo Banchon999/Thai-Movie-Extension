@@ -76,7 +76,7 @@ class TwentyFiveHDProvider : MainAPI() {
         val doc = fetch(url)
         val item = SiteParser.detail(doc) ?: throw ErrorLoadingException("ไม่พบชื่อเรื่องในหน้าเว็บ")
         if (item.series) {
-            if (item.episodes.isEmpty()) throw ErrorLoadingException("พบหน้าซีรีส์ แต่ยังอ่านรายการตอนไม่ได้")
+            if (item.episodes.isEmpty()) throw ErrorLoadingException("พบซีรีส์ แต่รายการตอนอยู่ในตัวเล่นภายนอก ซึ่งปลั๊กอินยังอ่านไม่ได้")
             val episodes = item.episodes.map { part ->
                 newEpisode(mapper.writeValueAsString(Playback(part.url, doc.baseUri())), initializer = {
                     name = part.title

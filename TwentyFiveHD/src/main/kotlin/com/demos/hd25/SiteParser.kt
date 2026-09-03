@@ -5,7 +5,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-/** Provisional WordPress selectors. Replace using real 25-HD fixtures before stable release. */
+/** 25-HD selectors verified against browser DOM excerpts captured on 2026-09-03. */
 internal object SiteParser {
     data class Card(val title: String, val url: String, val poster: String?, val series: Boolean)
     data class Part(val title: String, val url: String, val season: Int?, val number: Int?)
@@ -17,9 +17,9 @@ internal object SiteParser {
         val tags: List<String>, val episodes: List<Part>, val series: Boolean,
     )
 
-    private const val CARDS = "article.item, article.post, .movie-item, .movie-box, .halim-item, .box-movie, .items > .item"
+    private const val CARDS = ".movie_box, article.item, article.post, .movie-item, .movie-box, .halim-item, .box-movie, .items > .item"
     private const val EPISODES = "#seasons .episodios a[href], .episodes a[href], .episode-list a[href], .list-episodes a[href], .halim-list-eps a[href]"
-    private const val PLAYER = "#player, #dooplay_player_content, .dooplay_player, .player, .player-container, .movieplay, #movie-player, .entry-content"
+    private const val PLAYER = "#box-player, .real-player-container, #player, #dooplay_player_content, .dooplay_player, .player, .player-container, .movieplay, #movie-player, .entry-content"
     private val episodeNumber = Regex("(?:ตอนที่|ตอน|EP(?:ISODE)?[. ]*)\\s*(\\d+)", RegexOption.IGNORE_CASE)
     private val seasonNumber = Regex("(?:SEASON|ซีซั่น|S)\\s*(\\d+)", RegexOption.IGNORE_CASE)
     private val yearNumber = Regex("\\b(?:19|20)\\d{2}\\b")
@@ -54,11 +54,13 @@ internal object SiteParser {
         val url = absolute(doc.baseUri(), link.attr("href")) ?: return@mapNotNull null
         if (!sameSite(doc.baseUri(), url)) return@mapNotNull null
         val img = card.selectFirst("img")
-        val title = card.selectFirst("h2, h3, .title, .data h3")?.text()?.takeIf { it.isNotBlank() }
+        // Search-result <p> text is shortened; aria-label retains the complete title.
+        val title = link.attr("aria-label").takeIf { it.isNotBlank() }
+            ?: card.selectFirst("h2, h3, .title, .data h3")?.text()?.takeIf { it.isNotBlank() }
             ?: link.attr("title").takeIf { it.isNotBlank() }
             ?: img?.attr("alt")?.takeIf { it.isNotBlank() }
             ?: link.text().takeIf { it.isNotBlank() } ?: return@mapNotNull null
-        val series = card.hasClass("tvshows") || card.selectFirst(".episodes, .episode") != null || episodeNumber.containsMatchIn(title)
+        val series = card.hasClass("tvshows") || card.selectFirst(".box-movie-episode, .episodes, .episode") != null || episodeNumber.containsMatchIn(title)
         Card(title, url, image(img, doc.baseUri()), series)
     }.distinctBy { it.url }
 
@@ -70,14 +72,18 @@ internal object SiteParser {
         doc.body().text().let { it.contains("ไม่พบผลการค้นหา") || it.contains("ไม่พบข้อมูล") || it.contains("Nothing Found", true) }
 
     fun detail(doc: Document): Detail? {
-        val title = doc.selectFirst("h1.entry-title, .sheader h1, h1")?.text()?.takeIf { it.isNotBlank() }
+        // A union with plain h1 would still select the site's banner first in DOM order.
+        val title = doc.selectFirst(".h1-text h1")?.text()?.takeIf { it.isNotBlank() }
+            ?: doc.selectFirst("h1.entry-title, .sheader h1")?.text()?.takeIf { it.isNotBlank() }
             ?: doc.selectFirst("meta[property=og:title]")?.attr("content")?.takeIf { it.isNotBlank() }
+            ?: doc.selectFirst("h1")?.text()?.takeIf { it.isNotBlank() }
             ?: return null
         val poster = absolute(doc.baseUri(), doc.selectFirst("meta[property=og:image]")?.attr("content"))
             ?: image(doc.selectFirst(".sheader .poster img, .movie-poster img, .poster img"), doc.baseUri())
-        val plot = doc.selectFirst(".wp-content, .entry-content .description, .synopsis, .description")?.text()?.takeIf { it.isNotBlank() }
+        val plot = doc.selectFirst(".movie-excerpt .movie-content")?.text()?.takeIf { it.isNotBlank() }
+            ?: doc.selectFirst(".wp-content, .entry-content .description, .synopsis, .description")?.text()?.takeIf { it.isNotBlank() }
             ?: doc.selectFirst("meta[property=og:description]")?.attr("content")?.takeIf { it.isNotBlank() }
-        val tags = doc.select(".sgeneros a, a[rel='category tag'], a[rel=category], .genres a").map { it.text().trim() }.filter { it.isNotBlank() }.distinct()
+        val tags = doc.select(".movie-tags a, .sgeneros a, a[rel='category tag'], a[rel=category], .genres a").map { it.text().trim() }.filter { it.isNotBlank() }.distinct()
         val episodes = doc.select(EPISODES).mapNotNull { link ->
             val href = absolute(doc.baseUri(), link.attr("href")) ?: return@mapNotNull null
             if (!sameSite(doc.baseUri(), href) || link.attr("href").startsWith("#")) return@mapNotNull null
@@ -91,7 +97,8 @@ internal object SiteParser {
             // Do not invent episode numbers when a site supplies unnumbered labels.
             if (parts.isNotEmpty() && parts.all { it.number != null }) parts.sortedWith(compareBy({ it.season ?: 1 }, { it.number })) else parts
         }
-        val series = episodes.isNotEmpty() || doc.body().hasClass("single-tvshows") || doc.selectFirst("#seasons, .episode-list, .list-episodes") != null
+        val series = episodes.isNotEmpty() || doc.body().hasClass("single-tvshows") || doc.selectFirst("#seasons, .episode-list, .list-episodes") != null ||
+            embeds(doc).any { Regex("[?&]type=tv(?:&|$)").containsMatchIn(it) }
         return Detail(title, poster, plot, yearNumber.find(title)?.value?.toIntOrNull(), tags, episodes, series)
     }
 
@@ -102,8 +109,8 @@ internal object SiteParser {
 
     fun embeds(doc: Document, embedPage: Boolean = false): List<String> {
         val roots: List<Element> = if (embedPage) listOf(doc.body()) else doc.select(PLAYER).toList()
-        return roots.flatMap { it.select("iframe[src], iframe[data-src], [data-iframe], [data-embed]") }.mapNotNull { e ->
-            listOf("data-src", "src", "data-iframe", "data-embed").firstNotNullOfOrNull { absolute(doc.baseUri(), e.attr(it)) }
+        return roots.flatMap { it.select("iframe[src], iframe[data-src], iframe[data-original-src], [data-iframe], [data-embed]") }.mapNotNull { e ->
+            listOf("data-original-src", "data-src", "src", "data-iframe", "data-embed").firstNotNullOfOrNull { absolute(doc.baseUri(), e.attr(it)) }
         }.distinct()
     }
 
