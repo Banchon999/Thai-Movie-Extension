@@ -33,3 +33,15 @@ Remaining runtime limits: development-browser access is blocked by ZMDB and dire
 navigation is denied. No live calls to these blocked sites were made during this change. Real
 playlist contents/gateway processing (`gw_enc`), CDN headers, Android playback, audio and subtitles
 are unverified. Version 4 is beta and requires a device test; successful CI is not proof of playback.
+
+## Version 7 — media routing
+
+The `data.hlsUrl` host (`g.zmdb.net`) is a playlist gateway, not a media origin. Media is served only
+by the hosts named in the master's content-steering document; the gateway returns 403 for `hdr.bin`
+and `seg_*.bin` regardless of headers, referer or query. Playback therefore requires either a player
+that implements HLS content steering or the host rewrite now done in `HlsGateway`.
+
+Movie flow is no longer synthetic: the bootstrap, links and video responses for a real movie
+(`type=movie`, no `seasons`, no `seasonNumber`/`episodeNumber` in the links response) were exercised
+end to end and match the implemented contract. Variant playlists (`_index`) expire roughly five
+minutes after the master is read; media segments carry no signature.

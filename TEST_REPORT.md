@@ -1,3 +1,46 @@
+# Version 7 — root cause found and fixed
+
+The playback failure is finally identified from the live service, not inferred. Development network
+access to 25-hd.com and zmdb.net worked in this session, so the whole chain was replayed for the
+movie the user reported (`god-skin-2026`, ZMDB `id=1278971&type=movie`):
+
+| Request | `g.zmdb.net` (gateway in `data.hlsUrl`) | `lb.cdn-osxpsmd000{1,2}.space` (steered hosts) |
+| --- | --- | --- |
+| `_master` | 200 | 403 |
+| `_index` (variant playlist) | 200 | 200 |
+| `hdr.bin`, `seg_*.bin` (media) | **403** | 200 |
+
+The master declares `#EXT-X-CONTENT-STEERING:SERVER-URI="/hls/playback-routing.json?gw_enc=o1"`, and
+that document's `PATHWAY-CLONES` replace the host for everything below the master. The gateway serves
+playlists only and answers 403 for every media byte, so a player that does not apply content steering
+requests segments from the gateway and fails — which is exactly the reported
+`ERROR_CODE_IO_BAD_HTTP_STATUS (2004)`. No header, referer, `Range` or query variation changes the
+gateway's 403; the split is by role, not by authorisation.
+
+Fix: `HlsGateway` (the interceptor returned by `getVideoInterceptor`) reads the steering document the
+master itself declares, sends a refused media request again against each declared host in priority
+order, and keeps using the host that answers. The master and the steering document are never moved,
+because the replacement hosts answer 403 for the master. `HlsSteering` parses both documents. The v5
+master preflight (`HlsCheck`) is removed: it could not have detected this, since the master is the one
+resource the gateway does serve.
+
+Also observed and accounted for: `_index` carries `sig`/`exp` and stops working about five minutes
+after the master is read, while media segments need no signature at all. Emitting per-quality variant
+playlists as links was therefore rejected — the master stays valid and the player re-reads `_index`
+itself.
+
+Validation: 15 Kotlin cases for the new code (5 steering-parsing, 4 gateway-routing, 6 existing
+diagnostic cases retargeted at the new interceptor) plus 5 Python release cases pass locally. The full
+chain was then replayed against the live service through the real interceptor: master 200, variant
+200, init segment 200, first media segment 200 — 6 requests, 5 successful, one recorded 403 followed
+by the reroute to `lb.cdn-osxpsmd0002.space`. Before this change the same two media requests were 403.
+
+Limits: Cloudstream's downloader does not use `getVideoInterceptor`, so downloads are expected to keep
+failing; only playback is fixed. Android playback itself is still untested on a device, and the
+diagnostic report (search `25hd-debug`) remains the way to check it. Casting may not use this hook.
+
+---
+
 # Version 6 diagnostic build
 
 User confirmed v5 still returns Media3 IO_BAD_HTTP_STATUS (2004). Actual HTTP response and failed resource remain unknown.

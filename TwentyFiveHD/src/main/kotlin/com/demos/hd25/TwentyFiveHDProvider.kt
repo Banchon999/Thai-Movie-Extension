@@ -18,8 +18,10 @@ class TwentyFiveHDProvider : MainAPI() {
     private val diagnostics = PlaybackDiagnostics()
     private val diagnosticsUrl = "https://25-hd.com/__25hd_diagnostics__"
 
+    // ZMDB media lives on the hosts its master playlist steers to, not on the gateway that serves
+    // the playlist. Route refused media there so playback does not need player-side steering.
     override fun getVideoInterceptor(extractorLink: ExtractorLink): okhttp3.Interceptor =
-        diagnostics.interceptor(extractorLink.url)
+        HlsGateway(diagnostics, extractorLink.url)
 
     private val requestHeaders = mapOf(
         "User-Agent" to "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
@@ -80,7 +82,7 @@ class TwentyFiveHDProvider : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         if (query.trim().equals("25hd-debug", ignoreCase = true)) {
-            return listOf(newMovieSearchResponse("25-HD v6 • รายงานการเล่น", "$diagnosticsUrl?report=${System.nanoTime()}", TvType.Movie))
+            return listOf(newMovieSearchResponse("25-HD v7 • รายงานการเล่น", "$diagnosticsUrl?report=${System.nanoTime()}", TvType.Movie))
         }
         if (query.isBlank()) return emptyList()
         val doc = fetch("$mainUrl/?s=${URLEncoder.encode(query.trim(), "UTF-8")}")
@@ -93,7 +95,7 @@ class TwentyFiveHDProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         if (url.substringBefore('?') == diagnosticsUrl) {
-            return newMovieLoadResponse("25-HD v6 • รายงานการเล่น", url, TvType.Movie, "") {
+            return newMovieLoadResponse("25-HD v7 • รายงานการเล่น", url, TvType.Movie, "") {
                 plot = diagnostics.report()
                 comingSoon = true
             }
