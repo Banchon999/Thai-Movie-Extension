@@ -15,6 +15,12 @@ class TwentyFiveHDProvider : MainAPI() {
     override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries)
     override val mainPage = mainPageOf("/" to "อัปเดตล่าสุด")
 
+    private val diagnostics = PlaybackDiagnostics()
+    private val diagnosticsUrl = "https://25-hd.com/__25hd_diagnostics__"
+
+    override fun getVideoInterceptor(extractorLink: ExtractorLink): okhttp3.Interceptor =
+        diagnostics.interceptor(extractorLink.url)
+
     private val requestHeaders = mapOf(
         "User-Agent" to "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
         "Accept-Language" to "th-TH,th;q=0.9,en;q=0.7",
@@ -73,6 +79,9 @@ class TwentyFiveHDProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
+        if (query.trim().equals("25hd-debug", ignoreCase = true)) {
+            return listOf(newMovieSearchResponse("25-HD v6 • รายงานการเล่น", "$diagnosticsUrl?report=${System.nanoTime()}", TvType.Movie))
+        }
         if (query.isBlank()) return emptyList()
         val doc = fetch("$mainUrl/?s=${URLEncoder.encode(query.trim(), "UTF-8")}")
         val cards = SiteParser.cards(doc)
@@ -83,6 +92,12 @@ class TwentyFiveHDProvider : MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse {
+        if (url.substringBefore('?') == diagnosticsUrl) {
+            return newMovieLoadResponse("25-HD v6 • รายงานการเล่น", url, TvType.Movie, "") {
+                plot = diagnostics.report()
+                comingSoon = true
+            }
+        }
         val doc = fetch(url)
         val item = SiteParser.detail(doc) ?: throw ErrorLoadingException("ไม่พบชื่อเรื่องในหน้าเว็บ")
         if (item.series) {
@@ -149,12 +164,6 @@ class TwentyFiveHDProvider : MainAPI() {
         val emitSubtitle: (SubtitleFile) -> Unit = { sub -> if (subtitles.add(sub.url)) subtitleCallback(sub) }
 
         suspend fun direct(url: String, referer: String, label: String = "", type: ExtractorLinkType? = null) {
-            if (type == ExtractorLinkType.M3U8) {
-                // Validate the ZMDB master using the same headers that will be passed to playback.
-                // A player error 2004 hides the real HTTP status; surface it before emitting the link.
-                val response = app.get(url, headers = requestHeaders, referer = referer, timeout = 15)
-                HlsCheck.validate(response.code, response.text, response.url)
-            }
             emit(newExtractorLink(name, label.ifBlank { name }, url, type = type) {
                 this.referer = referer
                 headers = requestHeaders

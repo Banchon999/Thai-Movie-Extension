@@ -83,6 +83,7 @@ subprojects {
         // break compatibility on older Android devices.
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1") // JSON Parser
         add("testImplementation", "junit:junit:4.13.2")
+        add("testImplementation", "com.squareup.okhttp3:mockwebserver:4.12.0")
     }
 }
 

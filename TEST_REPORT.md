@@ -1,3 +1,15 @@
+# Version 6 diagnostic build
+
+User confirmed v5 still returns Media3 IO_BAD_HTTP_STATUS (2004). Actual HTTP response and failed resource remain unknown.
+
+Changes: replace the extra master preflight with an in-memory playback interceptor report. Search `25hd-debug` in 25-HD after failure to view it. The local report page performs no network request and each search creates a fresh report URL to avoid cached detail pages.
+
+Validation pending GitHub Actions: six MockWebServer/unit tests cover child HTTP failure, unchanged body/headers, no extra requests, redirects, key/master classification, partial success, exception-message redaction, bounded sessions and an empty report. Five Python release tests passed locally. Existing parser/client checks are retained.
+
+The upstream interceptor hook selects OkHttp instead of Cronet. No server policy or authentication changes are made. Android playback and report visibility still require user testing; casting/downloads may not use this hook. Prior v5 preflight helper tests are retained but that helper is no longer called by the provider.
+
+---
+
 # Version 5 diagnostics — 2026-09-03
 
 User screenshot: Cloudstream reports `ERROR_CODE_IO_BAD_HTTP_STATUS (2004)`.
