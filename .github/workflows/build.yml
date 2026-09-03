@@ -1,0 +1,77 @@
+name: Build 25-HD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudstream-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+      - name: Install required Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Test packaging
+        run: python3 -m unittest discover -s tests -v
+      - name: Test and compile provider
+        run: gradle --no-daemon TwentyFiveHD:testDebugUnitTest make makePluginsJson ensureJarCompatibility
+      - name: Validate and stage repository
+        run: python3 scripts/stage_release.py --repository "$GITHUB_REPOSITORY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloudstream-25hd
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: cloudstream-25hd
+          path: dist
+      - name: Publish compiled repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          target="$RUNNER_TEMP/cloudstream-builds"
+          if git ls-remote --exit-code --heads origin builds >/dev/null; then
+            git fetch origin builds --depth=1
+            git worktree add --detach "$target" FETCH_HEAD
+          else
+            git worktree add --detach "$target" HEAD
+            git -C "$target" switch --orphan builds
+          fi
+          cp dist/* "$target/"
+          git -C "$target" add repo.json plugins.json '*.cs3' '*.jar'
+          if git -C "$target" diff --cached --quiet; then
+            echo 'Compiled files unchanged.'
+          else
+            git -C "$target" commit -m "Build $GITHUB_SHA"
+            git -C "$target" push origin HEAD:builds
+          fi
+          echo "Repository: https://raw.githubusercontent.com/$GITHUB_REPOSITORY/builds/repo.json" >> "$GITHUB_STEP_SUMMARY"
