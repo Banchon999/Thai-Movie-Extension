@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "data": {
+    "availableQualities": ["1080p", "720p", "480p", "360p"],
+    "hlsUrl": "https://media.example/hls/video-id/t.example/_master?gw_enc=01&signature=a%2Fb%3D",
+    "ladderComplete": true,
+    "name": "",
+    "seekPreview": {
+      "imagePlaylistUrl": "https://preview.example/hls/video-id/_sb/images.m3u8",
+      "vttUrl": "https://preview.example/hls/video-id/_sb/storyboard.vtt"
+    }
+  }
+}
