@@ -9,7 +9,13 @@ User feedback: search and descriptions work; some covers are missing; movie play
 series episodes are selected through buttons inside the external player.
 
 - Python release tests: PASS locally (5 cases).
-- Kotlin tests/build/publication: pending GitHub Actions for version 3.
+- Kotlin tests: PASS (`testDebugUnitTest`, 16 parser cases).
+- CS3/JAR compilation, compatibility validation and publication: PASS.
+- Source commit: `e83bf8535ad76aefc15ed7cd55308ef243a61890`.
+- Workflow: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33753219089
+- Published `plugins.json` verified: version 3, status 3.
+- CS3: 39,264 bytes; SHA-256 `2b647796d8445ec7dae9603ace8a20fbfd235e876674a34b50538c7133db55e1`.
+- JAR: 141,488 bytes; SHA-256 `5e0ec6cbab4af0236098ddaa859e1c943da8afcef8e767b7f3f63b2b9ea9f1d1`.
 - Added 2 real-poster regression tests and 2 focused parser edge cases (16 Kotlin cases total).
 - The series metadata change and extractor failure fallback are compiled in CI; Android runtime behavior is not yet tested.
 - Playback and dynamic episode selection remain unresolved. ZMDB blocked the development browser.
