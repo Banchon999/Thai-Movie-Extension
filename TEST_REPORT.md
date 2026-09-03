@@ -12,7 +12,14 @@ Limits: this adds one GET before playback; single-use URLs may need different ha
 inspect variants, keys or segments and is not a confirmed playback fix. No live blocked-site requests
 were made in development, and no header/domain changes were guessed.
 
-Validation: pending version 5 CI (37 Kotlin cases including 4 new HLS diagnostic cases).
+Validation: PASS — 37 Kotlin cases (including 4 new HLS diagnostic cases), 5 Python release cases,
+CS3/JAR compilation and compatibility validation. Build and publish jobs succeeded.
+Public plugins.json verified version 5, status 3.
+
+Source commit: `f86b03ac03e97995b241ae34b870eabc0e376adc`.
+Workflow: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33772628751
+CS3: 58,111 bytes; SHA-256 `18985241257da2af95096f7d73b8a69fbea11c1daae6d286ef5bdbdd523fbad5`.
+Android retest and the actual failing HTTP response remain pending.
 
 # Version 4 validation — 2026-09-03
 
