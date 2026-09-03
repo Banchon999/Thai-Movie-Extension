@@ -3,7 +3,12 @@
 ZMDB bootstrap-to-HLS integration using user-supplied response contracts. Tokens are fetched anew
 per play and are not persisted in source, fixtures, or serialized episodes.
 
-- CI: pending version 4 run.
+- CI: PASS — 33 Kotlin cases, 5 Python cases, CS3/JAR compilation and compatibility checks.
+- Publication: PASS; public plugins.json verified version=4, status=3.
+- Release source: `1f60cb2a08b92ba894138f69f3314a2620f0c4b4`.
+- Workflow: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33769746495
+- CS3: 57,417 bytes; SHA-256 `e1608e9b07f79a1833da9fe078cd03719c9d552d189842dc8eb71baed5c55e9d`.
+- JAR: 220,679 bytes; SHA-256 `5ed330fce236211939b5047ae44c4190b3e0181b7c28169c72723610f4ace6d6`.
 - Added 10 bootstrap/client tests to the previous 23 Kotlin cases (33 total).
 - Full request sequence is exercised using an injected fake transport, not the live blocked site.
 - Movie bootstrap behavior is synthetic; TV bootstrap fields come from user-supplied HTML.

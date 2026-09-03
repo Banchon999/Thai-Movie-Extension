@@ -21,7 +21,10 @@ stream037 audio/subtitle query is not implemented; available tracks depend on th
 Other player hosts are not guessed. Failed video servers do not prevent trying another declared server.
 The client never persists tokens, forwards Authorization to the CDN, or prints response bodies in errors.
 
-Validation: pending version 4 CI. Added transport-injected tests for the full episode 7 request sequence,
+Validation: version 4 CI passed 33 Kotlin cases and 5 Python cases; CS3/JAR build and publication passed.
+Public plugins.json confirms version 4, status 3.
+Workflow: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33769746495
+ Added transport-injected tests for the full episode 7 request sequence,
 one-time token refresh, 403 handling, wrong/missing episodes, title mismatch, unavailable episodes,
 numeric sorting across seasons, and cancellation. Movie request handling is covered by a synthetic
 fixture because a complete movie bootstrap has not been captured.
