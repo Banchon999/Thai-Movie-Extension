@@ -1,3 +1,20 @@
+# Version 3 validation — 2026-09-03
+
+Changes: prefer visible detail posters over inconsistent OpenGraph images; use responsive
+WordPress image variants and image request headers; keep series details accessible with an
+explicit unsupported-episode notice; retain HTML fallbacks when an extractor throws;
+recognize the observed `data-embed-url` player attribute.
+
+User feedback: search and descriptions work; some covers are missing; movie playback fails;
+series episodes are selected through buttons inside the external player.
+
+- Python release tests: PASS locally (5 cases).
+- Kotlin tests/build/publication: pending GitHub Actions for version 3.
+- Added 2 real-poster regression tests and 2 focused parser edge cases (16 Kotlin cases total).
+- The series metadata change and extractor failure fallback are compiled in CI; Android runtime behavior is not yet tested.
+- Playback and dynamic episode selection remain unresolved. ZMDB blocked the development browser.
+- No claim that poster selection fixes every missing cover; device retest is still needed.
+
 # Version 2 validation — 2026-09-03
 
 Version 2 fixes `.movie_box` cards, full search titles, movie-heading priority, metadata and deferred iframe discovery.

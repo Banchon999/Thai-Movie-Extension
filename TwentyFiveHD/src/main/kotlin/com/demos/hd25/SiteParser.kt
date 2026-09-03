@@ -41,12 +41,22 @@ internal object SiteParser {
         URI(a).host?.removePrefix("www.").equals(URI(b).host?.removePrefix("www."), ignoreCase = true)
     } catch (_: Exception) { false }
 
-    private fun image(element: Element?, base: String): String? {
+    private fun image(element: Element?, base: String, targetWidth: Int = 200): String? {
         if (element == null) return null
-        for (attribute in listOf("data-src", "data-lazy-src", "data-original", "src")) {
+        for (attribute in listOf("data-src", "data-lazy-src", "data-original")) {
             absolute(base, element.attr(attribute))?.let { return it }
         }
-        return null
+        // WordPress supplies smaller, browser-used variants alongside very large originals.
+        for (attribute in listOf("data-srcset", "srcset")) {
+            val candidates = element.attr(attribute).split(',').mapNotNull { entry ->
+                val parts = entry.trim().split(Regex("\\s+"))
+                val width = parts.getOrNull(1)?.removeSuffix("w")?.toIntOrNull()
+                val url = absolute(base, parts.firstOrNull())
+                if (width != null && width > 0 && url != null) width to url else null
+            }.sortedBy { it.first }
+            (candidates.firstOrNull { it.first >= targetWidth } ?: candidates.lastOrNull())?.let { return it.second }
+        }
+        return absolute(base, element.attr("src"))
     }
 
     fun cards(doc: Document): List<Card> = doc.select(CARDS).mapNotNull { card ->
@@ -78,8 +88,10 @@ internal object SiteParser {
             ?: doc.selectFirst("meta[property=og:title]")?.attr("content")?.takeIf { it.isNotBlank() }
             ?: doc.selectFirst("h1")?.text()?.takeIf { it.isNotBlank() }
             ?: return null
-        val poster = absolute(doc.baseUri(), doc.selectFirst("meta[property=og:image]")?.attr("content"))
-            ?: image(doc.selectFirst(".sheader .poster img, .movie-poster img, .poster img"), doc.baseUri())
+        // Live pages have different OG images; prefer the poster displayed beside the synopsis.
+        val poster = image(doc.selectFirst(".movie-description .thumb-img img"), doc.baseUri(), 400)
+            ?: image(doc.selectFirst(".sheader .poster img, .movie-poster img, .poster img"), doc.baseUri(), 400)
+            ?: absolute(doc.baseUri(), doc.selectFirst("meta[property=og:image]")?.attr("content"))
         val plot = doc.selectFirst(".movie-excerpt .movie-content")?.text()?.takeIf { it.isNotBlank() }
             ?: doc.selectFirst(".wp-content, .entry-content .description, .synopsis, .description")?.text()?.takeIf { it.isNotBlank() }
             ?: doc.selectFirst("meta[property=og:description]")?.attr("content")?.takeIf { it.isNotBlank() }
@@ -109,8 +121,8 @@ internal object SiteParser {
 
     fun embeds(doc: Document, embedPage: Boolean = false): List<String> {
         val roots: List<Element> = if (embedPage) listOf(doc.body()) else doc.select(PLAYER).toList()
-        return roots.flatMap { it.select("iframe[src], iframe[data-src], iframe[data-original-src], [data-iframe], [data-embed]") }.mapNotNull { e ->
-            listOf("data-original-src", "data-src", "src", "data-iframe", "data-embed").firstNotNullOfOrNull { absolute(doc.baseUri(), e.attr(it)) }
+        return roots.flatMap { it.select("iframe[src], iframe[data-src], iframe[data-original-src], [data-iframe], [data-embed], [data-embed-url]") }.mapNotNull { e ->
+            listOf("data-original-src", "data-embed-url", "data-src", "src", "data-iframe", "data-embed").firstNotNullOfOrNull { absolute(doc.baseUri(), e.attr(it)) }
         }.distinct()
     }
 

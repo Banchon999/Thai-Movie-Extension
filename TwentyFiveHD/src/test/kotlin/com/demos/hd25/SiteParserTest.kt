@@ -26,6 +26,24 @@ class SiteParserTest {
         assertNull(SiteParser.nextPage(SiteParser.document("""<a rel="next" href="https://ads.example/">Next</a>""", base)))
     }
 
+    @Test fun srcsetOnlyPosterWorksWithPlaceholderAndSmallImages() {
+        val doc = SiteParser.document("""
+            <div class="movie_box"><a href="/movie/" aria-label="Movie">
+              <img src="data:image/gif;base64,AA" data-srcset="/small.jpg 100w, /medium.jpg 180w">
+            </a></div>
+        """.trimIndent(), base)
+        assertEquals("https://25-hd.com/medium.jpg", SiteParser.cards(doc).single().poster)
+    }
+
+    @Test fun fakePlayerEmbedAttributeWorksWithoutAnIframe() {
+        val doc = SiteParser.document("""
+          <div data-embed-url="https://ads.example/"></div>
+          <div id="box-player"><div class="fake-player-container"
+            data-embed-url="https://zmdb.net/embed?id=108978&amp;type=tv"></div></div>
+        """.trimIndent(), base)
+        assertEquals(listOf("https://zmdb.net/embed?id=108978&type=tv"), SiteParser.embeds(doc))
+    }
+
     @Test fun seriesSortsNumericallyAndKeepsUnknownEpisodeNumbersUnknown() {
         val doc = SiteParser.document("""
           <h1>ซีรีส์ (2025)</h1><div class="episode-list">

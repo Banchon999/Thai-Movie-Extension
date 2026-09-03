@@ -39,9 +39,15 @@ class TwentyFiveHDProvider : MainAPI() {
     }
 
     private fun SiteParser.Card.toSearch(): SearchResponse = if (series) {
-        newTvSeriesSearchResponse(title, url, TvType.TvSeries) { posterUrl = poster }
+        newTvSeriesSearchResponse(title, url, TvType.TvSeries) {
+            posterUrl = poster
+            posterHeaders = requestHeaders + ("Referer" to "$mainUrl/")
+        }
     } else {
-        newMovieSearchResponse(title, url, TvType.Movie) { posterUrl = poster }
+        newMovieSearchResponse(title, url, TvType.Movie) {
+            posterUrl = poster
+            posterHeaders = requestHeaders + ("Referer" to "$mainUrl/")
+        }
     }
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -76,7 +82,6 @@ class TwentyFiveHDProvider : MainAPI() {
         val doc = fetch(url)
         val item = SiteParser.detail(doc) ?: throw ErrorLoadingException("ไม่พบชื่อเรื่องในหน้าเว็บ")
         if (item.series) {
-            if (item.episodes.isEmpty()) throw ErrorLoadingException("พบซีรีส์ แต่รายการตอนอยู่ในตัวเล่นภายนอก ซึ่งปลั๊กอินยังอ่านไม่ได้")
             val episodes = item.episodes.map { part ->
                 newEpisode(mapper.writeValueAsString(Playback(part.url, doc.baseUri())), initializer = {
                     name = part.title
@@ -86,13 +91,20 @@ class TwentyFiveHDProvider : MainAPI() {
             }
             return newTvSeriesLoadResponse(item.title, url, TvType.TvSeries, episodes) {
                 posterUrl = item.poster
-                plot = item.plot
+                posterHeaders = requestHeaders + ("Referer" to doc.baseUri())
+                // Keep details accessible even though external player controls are not yet supported.
+                comingSoon = false
+                plot = if (episodes.isEmpty()) listOfNotNull(
+                    "ปลั๊กอินยังอ่านปุ่มเลือกตอนในตัวเล่นภายนอกไม่ได้ กรุณาเปิดเรื่องนี้ในเบราว์เซอร์เพื่อเลือกตอน",
+                    item.plot,
+                ).joinToString("\n\n") else item.plot
                 year = item.year
                 tags = item.tags
             }
         }
         return newMovieLoadResponse(item.title, url, TvType.Movie, mapper.writeValueAsString(Playback(doc.baseUri(), "$mainUrl/"))) {
             posterUrl = item.poster
+            posterHeaders = requestHeaders + ("Referer" to doc.baseUri())
             plot = item.plot
             year = item.year
             tags = item.tags
@@ -143,7 +155,15 @@ class TwentyFiveHDProvider : MainAPI() {
                 }
                 // A matched extractor may return true without yielding a playable link.
                 val before = sent.size
-                if (current.depth > 0) loadExtractor(current.url, current.referer, emitSubtitle, emit)
+                if (current.depth > 0) {
+                    try {
+                        loadExtractor(current.url, current.referer, emitSubtitle, emit)
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        lastFailure = e.message
+                        // An extractor failure must not skip HTML media/iframe fallbacks.
+                    }
+                }
                 if (sent.size > before) continue
                 val doc = fetch(current.url, current.referer)
                 inspect(doc, current.depth, current.depth > 0)

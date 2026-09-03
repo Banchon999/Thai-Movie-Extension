@@ -1,7 +1,7 @@
-version = 2
+version = 3
 
 cloudstream {
-    description = "25-HD ภาษาไทย — แก้หน้าแรก/ค้นหาแล้ว, การเล่นและรายการตอน ZMDB ยังไม่ยืนยัน"
+    description = "25-HD ภาษาไทย — ปรับภาพปก/เปิดรายละเอียดซีรีส์ได้, การเล่นและปุ่มเลือกตอน ZMDB ยังไม่รองรับครบ"
     authors = listOf("Banchon999")
     language = "th"
     status = 3 // Beta: real markup verified; ZMDB playback is still unverified.

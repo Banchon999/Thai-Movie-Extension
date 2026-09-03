@@ -13,7 +13,7 @@ class LiveMarkupTest {
         val cards = SiteParser.cards(fixture("home", "https://25-hd.com/"))
         assertEquals(3, cards.size)
         assertEquals("Minions & Monsters (2026) มินเนี่ยน & มอนสเตอร์", cards.first().title)
-        assertTrue(cards.first().poster!!.endsWith("ai10GoujvMbpWtXWvW0aPqxrDNm.jpg"))
+        assertTrue(cards.first().poster!!.endsWith("ai10GoujvMbpWtXWvW0aPqxrDNm-200x300.jpg"))
         assertFalse(cards.first().series)
         assertTrue(cards.single { it.url.endsWith("/reacher-2022/") }.series)
     }
@@ -47,5 +47,17 @@ class LiveMarkupTest {
         val detail = SiteParser.detail(doc)!!
         assertTrue(detail.series)
         assertTrue(detail.episodes.isEmpty())
+    }
+
+    @Test fun displayedMoviePosterOverridesDifferentOgImage() {
+        val doc = fixture("movie", "https://25-hd.com/minions-monsters-2026/")
+        doc.body().append(fixture("movie-poster", doc.baseUri()).body().html())
+        assertTrue(SiteParser.detail(doc)!!.poster!!.endsWith("ai10GoujvMbpWtXWvW0aPqxrDNm-683x1024.jpg"))
+    }
+
+    @Test fun displayedSeriesPosterOverridesDifferentOgImage() {
+        val doc = fixture("series", "https://25-hd.com/reacher-2022/")
+        doc.body().append(fixture("series-poster", doc.baseUri()).body().html())
+        assertTrue(SiteParser.detail(doc)!!.poster!!.endsWith("jjZYr2F7hOkruaac5fUSMvt77xK-scaled-2-683x1024.jpg"))
     }
 }
