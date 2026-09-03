@@ -20,7 +20,11 @@ class TwentyFiveHDProvider : MainAPI() {
         "Accept-Language" to "th-TH,th;q=0.9,en;q=0.7",
     )
 
-    data class Playback(val url: String = "", val referer: String = "")
+    data class Playback(val url: String = "", val referer: String = "", val season: Int? = null, val episode: Int? = null)
+    private val zmdb = ZmdbClient { url, referer, headers ->
+        val response = app.get(url, referer = referer, headers = requestHeaders + headers, timeout = 25)
+        ZmdbClient.Response(response.code, response.text)
+    }
     private data class Pending(val url: String, val referer: String, val depth: Int)
     // Keyed by homepage section and page number: follow actual next links, not guessed slugs.
     private val pageUrls = mutableMapOf<String, String>()
@@ -82,7 +86,22 @@ class TwentyFiveHDProvider : MainAPI() {
         val doc = fetch(url)
         val item = SiteParser.detail(doc) ?: throw ErrorLoadingException("ไม่พบชื่อเรื่องในหน้าเว็บ")
         if (item.series) {
-            val episodes = item.episodes.map { part ->
+            val embed = SiteParser.embeds(doc).firstOrNull(ZmdbPayload::isEmbed)
+            var episodeFailure: String? = null
+            val external = if (embed != null) try {
+                zmdb.bootstrap(embed, doc.baseUri()).episodes
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                episodeFailure = e.message
+                emptyList()
+            } else emptyList()
+            val episodes = if (external.isNotEmpty()) external.map { part ->
+                newEpisode(mapper.writeValueAsString(Playback(embed!!, doc.baseUri(), part.season, part.number)), initializer = {
+                    name = part.title
+                    season = part.season
+                    episode = part.number
+                }, fix = false)
+            } else item.episodes.map { part ->
                 newEpisode(mapper.writeValueAsString(Playback(part.url, doc.baseUri())), initializer = {
                     name = part.title
                     season = part.season
@@ -95,7 +114,7 @@ class TwentyFiveHDProvider : MainAPI() {
                 // Keep details accessible even though external player controls are not yet supported.
                 comingSoon = false
                 plot = if (episodes.isEmpty()) listOfNotNull(
-                    "ปลั๊กอินยังอ่านปุ่มเลือกตอนในตัวเล่นภายนอกไม่ได้ กรุณาเปิดเรื่องนี้ในเบราว์เซอร์เพื่อเลือกตอน",
+                    "ยังโหลดรายการตอนจากตัวเล่นไม่ได้" + (episodeFailure?.let { ": $it" } ?: ""),
                     item.plot,
                 ).joinToString("\n\n") else item.plot
                 year = item.year
@@ -149,6 +168,11 @@ class TwentyFiveHDProvider : MainAPI() {
             val current = pending.removeFirst()
             if (!visited.add(current.url)) continue
             try {
+                if (ZmdbPayload.isEmbed(current.url)) {
+                    val streams = zmdb.resolve(current.url, current.referer, input.season, input.episode)
+                    streams.forEach { direct(it.url, it.referer, "ZMDB ${it.server} • Auto", ExtractorLinkType.M3U8) }
+                    continue
+                }
                 if (ZmdbPayload.isVideoApi(current.url)) {
                     val response = app.get(current.url, headers = requestHeaders, referer = current.referer, timeout = 25)
                     if (response.code !in 200..299) throw ErrorLoadingException("ZMDB video API: HTTP ${response.code}")

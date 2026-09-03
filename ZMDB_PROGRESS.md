@@ -1,39 +1,32 @@
-# ZMDB response support — development work
+# ZMDB integration — version 4 beta
 
-Evidence supplied by the user on 2026-09-03:
+The user supplied the complete TV bootstrap HTML, episode-links JSON, a video API request,
+and a screenshot of its response. Fixtures preserve the observed fields but replace credentials,
+internal IDs, and signed URLs with inert examples. The token pasted in chat is not stored.
 
-- A successful `/api/embed/links?id=108978&type=tv&season=1&episode=7` response
-  contains `playerEmbedLinks`, `seasonNumber`, `episodeNumber`, and a temporary `linkToken`.
-- The two public player links use the same stream037 video ID but distinct audio/subtitle
-  query parameters. They must not be deduplicated by video ID alone.
-- A screenshot of a successful `/api/video/<id>` response shows `data.hlsUrl`,
-  `availableQualities`, `ladderComplete`, `name`, and `seekPreview`.
-- The `hlsUrl` is an extensionless master URL with a query. The preview playlist and VTT
-  belong to seek thumbnails. They are not playback or dialogue-subtitle fallbacks.
+Implemented flow:
 
-Implemented in this development branch:
+1. Load the declared ZMDB iframe and parse `script#bootstrap` as JSON.
+2. Enumerate `content.seasons[].episodes[]` with `hasLinks=true`, preserving season/episode numbers.
+3. Serialize only the embed URL, referring page and selected season/episode into Cloudstream episodes.
+4. On play, load a fresh bootstrap, use `query.id` and `query.type`, and send the temporary `linkToken`
+   as Authorization only to the episode-links API. Refresh once on 401, never on 403.
+5. Validate the response identifies the requested episode. Read the video ID from returned
+   `stream037.com/play/<id>` links and call the observed ZMDB `/api/video/<id>` endpoint.
+6. Emit `data.hlsUrl` with an explicit M3U8 type and preserve its complete URL/query.
+   Do not use seekPreview as video/subtitles, and do not construct filenames from `.bin` segments.
 
-- Parse the observed video and episode-link response shapes.
-- When provider traversal reaches a known ZMDB `/api/video/<id>` URL, request and parse
-  that response and emit its `data.hlsUrl` with `ExtractorLinkType.M3U8` explicitly.
-- Preserve the exact master URL/query; do not construct playlist filenames from `.bin` segments.
-- Retain each audio/subtitle player URL intact. Do not return links marked VIP-only.
-- Never persist the user's bearer/link tokens. Fixtures replace tokens, IDs and stream URLs
-  with inert examples while preserving the supplied response structure.
+Audio/subtitle variants sharing a video ID yield one master. Automatic selection matching the
+stream037 audio/subtitle query is not implemented; available tracks depend on the actual playlist.
+Other player hosts are not guessed. Failed video servers do not prevent trying another declared server.
+The client never persists tokens, forwards Authorization to the CDN, or prints response bodies in errors.
 
-Not yet implemented or verified:
+Validation: pending version 4 CI. Added transport-injected tests for the full episode 7 request sequence,
+one-time token refresh, 403 handling, wrong/missing episodes, title mismatch, unavailable episodes,
+numeric sorting across seasons, and cancellation. Movie request handling is covered by a synthetic
+fixture because a complete movie bootstrap has not been captured.
 
-- Initial embed metadata request and fresh token acquisition/refresh.
-- Enumerating all seasons and episodes. The links response describes a single selected episode.
-- Connecting the episode-link response and stream037 page to the video API request automatically.
-  The video API handler is available when that API URL reaches traversal; normal 25-HD catalogue
-  entries do not yet supply it. The episode-links parser is prepared for the missing integration.
-- Actual playlist response, any gateway-specific processing, audio/subtitle selection and playback
-  headers. The `gw_enc` parameter alone does not establish what processing is required.
-- Android playback. The developer browser remains blocked at ZMDB, and direct stream037 navigation
-  returned an unauthorized-source denial. No access-control bypass was attempted.
-
-Validation: GitHub Actions run 33765073964 passed 23 Kotlin parser cases (7 new, 16 existing),
-5 Python release tests, CS3/JAR compilation and compatibility validation. Publication was skipped.
-https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33765073964
-This is a draft implementation, not a new published plugin release. The published installer remains version 3.
+Remaining runtime limits: development-browser access is blocked by ZMDB and direct stream037
+navigation is denied. No live calls to these blocked sites were made during this change. Real
+playlist contents/gateway processing (`gw_enc`), CDN headers, Android playback, audio and subtitles
+are unverified. Version 4 is beta and requires a device test; successful CI is not proof of playback.

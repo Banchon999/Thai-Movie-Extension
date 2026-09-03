@@ -1,3 +1,14 @@
+# Version 4 validation — 2026-09-03
+
+ZMDB bootstrap-to-HLS integration using user-supplied response contracts. Tokens are fetched anew
+per play and are not persisted in source, fixtures, or serialized episodes.
+
+- CI: pending version 4 run.
+- Added 10 bootstrap/client tests to the previous 23 Kotlin cases (33 total).
+- Full request sequence is exercised using an injected fake transport, not the live blocked site.
+- Movie bootstrap behavior is synthetic; TV bootstrap fields come from user-supplied HTML.
+- Android playback, playlist gateway, audio/subtitle selection and CDN headers remain unverified.
+
 # Version 3 validation — 2026-09-03
 
 Changes: prefer visible detail posters over inconsistent OpenGraph images; use responsive
