@@ -2,9 +2,10 @@ package com.demos.hd25
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import com.sun.net.httpserver.HttpServer
 import java.io.Closeable
-import java.net.InetSocketAddress
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -99,7 +100,7 @@ class PlaybackDiagnosticsTest {
     }
 }
 
-/** A real local HTTP server using only the JDK, independent of OkHttp internal versions. */
+/** Minimal GET-only local server; uses Java APIs also exposed by the Android compile SDK. */
 private class LocalServer : Closeable {
     data class Recorded(val path: String, val headers: Map<String, List<String>>)
     private data class Reply(val status: Int, val body: String, val location: String?)
@@ -107,31 +108,52 @@ private class LocalServer : Closeable {
     private val requests = ConcurrentLinkedQueue<Recorded>()
     private val count = AtomicInteger()
     val requestCount: Int get() = count.get()
+    private val server = ServerSocket(0, 10, InetAddress.getByName("127.0.0.1"))
     private val executor = Executors.newSingleThreadExecutor()
-    private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
-        this.executor = this@LocalServer.executor
-        createContext("/") { exchange ->
-            count.incrementAndGet()
-            // TreeMap retains HTTP's case-insensitive header lookup.
-            val headers = java.util.TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
-            exchange.requestHeaders.forEach { (key, values) -> headers[key] = values.toList() }
-            requests.add(Recorded(exchange.requestURI.toString(), headers))
-            val reply = replies.poll() ?: Reply(500, "Unexpected test request", null)
-            reply.location?.let { exchange.responseHeaders.add("Location", it) }
-            val bytes = reply.body.toByteArray()
-            exchange.sendResponseHeaders(reply.status, if (bytes.isEmpty()) -1 else bytes.size.toLong())
-            exchange.responseBody.use { if (bytes.isNotEmpty()) it.write(bytes) }
-            exchange.close()
+    init {
+        executor.submit {
+            while (!server.isClosed) {
+                try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        val requestLine = reader.readLine() ?: return@use
+                        val headers = TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER)
+                        while (true) {
+                            val line = reader.readLine() ?: break
+                            if (line.isEmpty()) break
+                            val name = line.substringBefore(':')
+                            headers[name] = listOf(line.substringAfter(':').trim())
+                        }
+                        requests.add(Recorded(requestLine.split(' ')[1], headers))
+                        count.incrementAndGet()
+                        val reply = replies.poll() ?: Reply(500, "Unexpected test request", null)
+                        val bytes = reply.body.toByteArray()
+                        val head = buildString {
+                            append("HTTP/1.1 ${reply.status} Test\r\n")
+                            append("Content-Length: ${bytes.size}\r\nConnection: close\r\n")
+                            reply.location?.let { append("Location: $it\r\n") }
+                            append("\r\n")
+                        }
+                        socket.getOutputStream().apply {
+                            write(head.toByteArray())
+                            write(bytes)
+                            flush()
+                        }
+                    }
+                } catch (e: java.io.IOException) {
+                    if (!server.isClosed) throw e
+                }
+            }
         }
-        start()
     }
-    fun url(path: String) = "http://127.0.0.1:${server.address.port}$path"
+    fun url(path: String) = "http://127.0.0.1:${server.localPort}$path"
     fun enqueue(status: Int = 200, body: String = "", location: String? = null) {
         replies.add(Reply(status, body, location))
     }
     fun takeRequest(): Recorded = checkNotNull(requests.poll())
     override fun close() {
-        server.stop(0)
+        server.close()
         executor.shutdownNow()
     }
 }
