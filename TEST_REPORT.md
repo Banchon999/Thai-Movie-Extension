@@ -2,8 +2,28 @@
 
 Version 2 fixes `.movie_box` cards, full search titles, movie-heading priority, metadata and deferred iframe discovery.
 Browser inspection succeeded for the homepage (54 cards), Thai search (3 results), empty search, movie and series pages.
-Five captured-markup regression tests were added. Version 2 build results will be recorded after CI completes.
-ZMDB returned a Cloudflare security block; playback and external TV episode enumeration remain unverified.
+Five captured-markup regression tests were added; all passed together with the seven existing Kotlin cases.
+
+Source commit: `532936d6560efd1a701bf8e3da82f7ddb947f005`
+
+Successful workflow: https://github.com/Banchon999/Thai-Movie-Extension/actions/runs/33751524164
+
+| Check | Version 2 result |
+| --- | --- |
+| Kotlin parser tests | PASS — 5 captured-markup cases plus 7 existing cases |
+| Python release tests | PASS — 5 cases |
+| Kotlin / CS3 / cross-platform JAR build | PASS |
+| Publication | PASS — build and publish jobs successful |
+| Public plugins.json | Verified version=2, status=3 |
+| CS3 | 36,900 bytes |
+| JAR | 133,453 bytes |
+| Android catalogue display | Awaiting user retest; captured-markup parsing passed |
+| Video playback / ZMDB TV episodes | Unverified; ZMDB returned a Cloudflare security block in the test browser |
+
+CS3 SHA-256: `39d1d4b6e4db6b6530e53f238e4d45620c9309b1c61a64bbb182a00525baacb0`
+
+The captured fixtures are rendered DOM excerpts, not complete HTTP responses. The tests establish that
+these actual 25-HD card/title/player structures are parsed correctly; they do not establish video playback.
 
 ## Previous version 1 build record
 
