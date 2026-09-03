@@ -128,6 +128,7 @@ class ZmdbClientTest {
         </script>""", embed)
         assertEquals(listOf(0 to 1, 1 to 2, 2 to 2, 2 to 10),
             ZmdbPayload.bootstrap(doc).episodes.map { it.season to it.number })
+        assertEquals(0, ZmdbPayload.episodeLinks("""{"success":true,"seasonNumber":0,"episodeNumber":1}""").season)
     }
 
     @Test fun cancellationPropagatesInsteadOfBecomingMissingLinks() {

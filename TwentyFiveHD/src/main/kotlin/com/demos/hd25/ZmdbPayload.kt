@@ -117,9 +117,9 @@ internal object ZmdbPayload {
             val url = httpUrl(item.string("embedUrl")) ?: return@mapNotNull null
             PlayerLink(url, item.string("language"), item.string("qualityLabel"), item.string("serverLabel"))
         }?.distinctBy { it.url }.orEmpty()
-        fun positiveInt(field: String) = root.path(field).takeIf { it.isIntegralNumber && it.canConvertToInt() }
-            ?.intValue()?.takeIf { it > 0 }
+        fun number(field: String, minimum: Int) = root.path(field).takeIf { it.isIntegralNumber && it.canConvertToInt() }
+            ?.intValue()?.takeIf { it >= minimum }
         // linkToken is intentionally neither persisted nor included in diagnostic output.
-        return EpisodeLinks(positiveInt("seasonNumber"), positiveInt("episodeNumber"), players)
+        return EpisodeLinks(number("seasonNumber", 0), number("episodeNumber", 1), players)
     }
 }
