@@ -78,11 +78,11 @@ class TwentyFiveHDProvider : MainAPI() {
         if (item.series) {
             if (item.episodes.isEmpty()) throw ErrorLoadingException("พบหน้าซีรีส์ แต่ยังอ่านรายการตอนไม่ได้")
             val episodes = item.episodes.map { part ->
-                newEpisode(mapper.writeValueAsString(Playback(part.url, doc.baseUri())), fix = false) {
+                newEpisode(mapper.writeValueAsString(Playback(part.url, doc.baseUri())), initializer = {
                     name = part.title
                     season = part.season
                     episode = part.number
-                }
+                }, fix = false)
             }
             return newTvSeriesLoadResponse(item.title, url, TvType.TvSeries, episodes) {
                 posterUrl = item.poster
