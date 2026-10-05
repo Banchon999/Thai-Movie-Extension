@@ -1,3 +1,40 @@
+# Live playback check — 2026-10-05 (published version 7, no code change)
+
+Question: does the published v7 build actually play? Each stage was replayed against the live sites
+using the plugin's own `SiteParser`, `ZmdbClient`, `HlsGateway` and `HlsSteering` compiled on a JVM
+(the Cloudstream-dependent provider class excluded). The player side was wired exactly as Cloudstream's
+`CS3IPlayer.createVideoSource` does when a provider returns `getVideoInterceptor`: the app's OkHttp
+client plus the provider interceptor, with the link's referer and headers. ffmpeg, which like Media3
+ignores `EXT-X-CONTENT-STEERING`, acted as the player and decoded video and audio.
+
+Site/API state (unchanged since v7): homepage 200 with 54 `.movie_box` cards and a `next page-numbers`
+link; Thai search returns cards; movies embed `zmdb.net/embed?type=movie`, series `type=tv`.
+Bootstrap, `linkToken`, `/api/embed/links` and `/api/video/<id>` all 200. Master on `g.zmdb.net` 200
+and 403 on the CDN; every `_index`, audio, subtitle and image playlist 200 on both; every media byte
+(`hdr.bin`, `seg_*.bin`, audio segments, `*.vtt`, sprite sheets) 403/404 on the gateway and 206 on
+`lb.cdn-osxpsmd000{1,2}.space`, the hosts named by the master's steering document.
+
+| Title | Type | Result through the v7 interceptor |
+| --- | --- | --- |
+| Brothers (2026) S1E1 | series, 15 episodes | 1080p + Thai audio, 30 s decoded (750 frames); Thai VTT 200, 801 cues |
+| The Mentalist S1E23 | series, 23 episodes | 10 s decoded (240 frames); Thai VTT 200, 521 cues |
+| God Skin (2026) | movie | 15 s decoded (360 frames) |
+| Scream 7 (2026) | movie | 15 s decoded (375 frames); Thai VTT 200, 1617 cues |
+| Project Hail Mary (2026) | movie | 15 s decoded (360 frames); Thai VTT 200, 1684 cues |
+
+In every run the diagnostics report showed exactly one `HTTP 403 | media/bin | g.zmdb.net` followed by
+the reroute note, then all remaining requests (73–129 per run) succeeded. Requesting an episode the
+bootstrap does not list fails with the intended "ไม่พบตอนที่เลือกในข้อมูล ZMDB" message.
+
+Cloudstream source check (`recloudstream/cloudstream` master, `CS3IPlayer.kt`): `getVideoInterceptor`
+is looked up by `link.source` (the provider name, which `newExtractorLink(name, …)` sets) and is
+applied to the video, audio-track and subtitle data sources.
+
+Outcome: playback works; no source change was required. Not covered: an Android device itself
+(Media3 rather than ffmpeg), casting and downloads, which do not use the interceptor.
+
+---
+
 # Version 7 — root cause found and fixed
 
 The playback failure is finally identified from the live service, not inferred. Development network
