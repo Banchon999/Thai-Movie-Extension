@@ -13,8 +13,9 @@ buildscript {
 
     dependencies {
         classpath("com.android.tools.build:gradle:8.7.3")
-        // Cloudstream gradle plugin which makes everything work and builds plugins
-        classpath("com.github.recloudstream:gradle:-SNAPSHOT")
+        // Cloudstream gradle plugin which makes everything work and builds plugins.
+        // Pinned: JitPack no longer serves the -SNAPSHOT (32895ae) artifacts; 81b1d42 still resolves.
+        classpath("com.github.recloudstream:gradle:81b1d424d2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0")
     }
 }
