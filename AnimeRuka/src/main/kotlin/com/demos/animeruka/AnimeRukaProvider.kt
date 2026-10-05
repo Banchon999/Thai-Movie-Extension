@@ -22,7 +22,7 @@ class AnimeRukaProvider : MainAPI() {
         "Accept-Language" to "th-TH,th;q=0.9,en;q=0.8",
     )
     /** The stream CDN only answers with the embed host as Referer, and refuses an Origin header. */
-    private val streamReferer = "https://animemami.xyz/"
+    private val streamReferer = RukaDownload.REFERER
     private val pageUrls = mutableMapOf<String, String>()
 
     private suspend fun fetch(url: String, referer: String = "$mainUrl/"): Document {
@@ -122,6 +122,13 @@ class AnimeRukaProvider : MainAPI() {
                         headers = requestHeaders
                         quality = Qualities.Unknown.value
                     })
+                    // Cloudstream's downloader skips the video interceptor; it falls back to this link,
+                    // which the download hook serves with the right Referer and an unwrapped playlist.
+                    installDownloads()
+                    callback(newExtractorLink(name, "AnimeRuka • $label • ดาวน์โหลด", RukaDownload.playlistUrl(stream),
+                        type = ExtractorLinkType.M3U8) {
+                        quality = Qualities.Unknown.value
+                    })
                     found = true
                 } else if (loadExtractor(embed, data, subtitleCallback) { callback(it); found = true }) {
                     // Other mirrors (e.g. ok.ru) go through Cloudstream's own extractors.
@@ -135,6 +142,13 @@ class AnimeRukaProvider : MainAPI() {
         }
         if (!found) throw ErrorLoadingException("ยังดึงลิงก์วิดีโอไม่ได้" + (lastFailure?.let { ": $it" } ?: ""))
         return true
+    }
+
+    companion object {
+        /** Re-applied before each use: changing network settings in the app rebuilds the client. */
+        fun installDownloads() = synchronized(this) {
+            app.baseClient = RukaDownload.withHook(app.baseClient)
+        }
     }
 
     /** Older DooPlay setups only expose players through admin-ajax. */

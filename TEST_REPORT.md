@@ -1,3 +1,20 @@
+# AnimeRuka version 2 — downloads (2026-10-05)
+
+User report: AnimeRuka plays in the app but does not download. Cloudstream's downloader fetches with plain
+requests and never uses `getVideoInterceptor`, which is what unwraps the CDN's `{"p": base64}` playlists during
+playback. Reproduced with Cloudstream's own `M3u8Helper2.hslLazy` against a simulated CDN that wraps the
+playlist: the stream link fails with "M3u8 must contains TS files".
+
+Fix: a second link per player, "• ดาวน์โหลด", served by `RukaDownload.Hook` in the app's shared client. It fetches
+with the embed Referer (no Origin), unwraps the playlist, picks the best variant with muxed audio, drops any
+image bytes in front of the TS data, prepends an fMP4 init segment to segment 0, and proxies AES keys (segments
+kept raw so Cloudstream decrypts them). The stream link stays first, so playback is unchanged; the downloader
+falls back to the new link. Simulated end to end with the real provider and Cloudstream's download logic:
+stream link fails as reported, download link succeeds with a valid TS file. 10 AnimeRuka tests (5 new).
+The live CDN is still unreachable from the development network.
+
+---
+
 # Version 8 — downloads for 25-HD, new AnimeRuka provider (2026-10-05)
 
 ## 25-HD downloads
