@@ -45,7 +45,7 @@ internal class PlaybackDiagnostics {
 
     @Synchronized
     fun report(): String = buildString {
-        append("25-HD v7 — รายงานการเล่น\n")
+        append("25-HD v8 — รายงานการเล่น\n")
         if (sessions.isEmpty()) {
             append("ยังไม่มีคำขอจากตัวเล่นที่ตรวจได้ในรอบเปิดแอปนี้\nลองเล่นในแอปก่อน แล้วค้นหา 25hd-debug อีกครั้ง\nการ Cast/ดาวน์โหลดอาจไม่เรียกตัวตรวจนี้")
         } else {

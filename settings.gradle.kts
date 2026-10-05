@@ -1,2 +1,2 @@
 rootProject.name = "Cloudstream25HD"
-include("TwentyFiveHD")
+include("TwentyFiveHD", "AnimeRuka")

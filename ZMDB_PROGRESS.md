@@ -45,3 +45,12 @@ Movie flow is no longer synthetic: the bootstrap, links and video responses for 
 (`type=movie`, no `seasons`, no `seasonNumber`/`episodeNumber` in the links response) were exercised
 end to end and match the implemented contract. Variant playlists (`_index`) expire roughly five
 minutes after the master is read; media segments carry no signature.
+
+## Version 8 — downloads
+
+Cloudstream's HLS downloader (`M3u8Helper2.hslLazy`) rejects the ZMDB master ("no video with audio": every
+variant uses a separate audio rendition), ignores `EXT-X-MAP` and never uses `getVideoInterceptor`. Each title
+therefore also gets "ดาวน์โหลด <height>p" links under `zmdb-download.invalid`, answered by `ZmdbDownload.Hook`
+inside the app's shared client: a media playlist whose segments are muxed on request from the fMP4 video and
+every audio rendition into self-contained MPEG-TS (`Fmp4` + `TsMuxer`, samples copied, no re-encoding), plus
+WebVTT subtitles. Continuity counters are aligned per segment so concatenated segments form one valid stream.
