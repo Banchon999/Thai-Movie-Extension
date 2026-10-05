@@ -1,10 +1,10 @@
 [
     {
-        "jarFileSize": 118278,
-        "fileHash": "sha256-32aad129ee0ab214ea50d28087fd30eb294315b7f86ffc9eed009077cf1796b6",
+        "jarFileSize": 161774,
+        "fileHash": "sha256-f009cf5788057e92fd712b57c6e85d4c0be9baaf68b62aedea32ca93e5230c37",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/Banchon999/Thai-Movie-Extension",
-        "fileSize": 32197,
+        "fileSize": 42702,
         "status": 3,
         "language": "th",
         "authors": [
@@ -15,13 +15,13 @@
             "AnimeMovie",
             "OVA"
         ],
-        "version": 1,
+        "version": 2,
         "internalName": "AnimeRuka",
         "jarUrl": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/AnimeRuka.jar",
-        "description": "AnimeRuka \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e2d\u0e19\u0e34\u0e40\u0e21\u0e30\u0e1e\u0e32\u0e01\u0e22\u0e4c\u0e44\u0e17\u0e22/\u0e0b\u0e31\u0e1a\u0e44\u0e17\u0e22\u0e08\u0e32\u0e01 animeruka.com (\u0e15\u0e31\u0e27\u0e40\u0e25\u0e48\u0e19 animemami)",
+        "description": "AnimeRuka \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e2d\u0e19\u0e34\u0e40\u0e21\u0e30\u0e1e\u0e32\u0e01\u0e22\u0e4c\u0e44\u0e17\u0e22/\u0e0b\u0e31\u0e1a\u0e44\u0e17\u0e22\u0e08\u0e32\u0e01 animeruka.com \u0e14\u0e39\u0e41\u0e25\u0e30\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e40\u0e01\u0e47\u0e1a\u0e44\u0e27\u0e49\u0e44\u0e14\u0e49",
         "url": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/AnimeRuka.cs3",
         "name": "AnimeRuka",
-        "jarHash": "sha256-d966901b0959307e4caf2ba5f06ea2b063ec2bbf7f0fcfc1798de076da39c1a1"
+        "jarHash": "sha256-6bb64e33e11786c904efd5d52ab747679647c114d24d6bb03cb2b9ab31d89965"
     },
     {
         "jarFileSize": 397406,
