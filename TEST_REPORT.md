@@ -1,3 +1,22 @@
+# AnimeRuka version 3 — download order and real player data (2026-10-05)
+
+User report: version 2 still does not download; the user supplied the real episode page
+(`/ep/kanata-kara-ep-1/`). It confirms DooPlay ajax players `หลัก` (animemami.xyz), `สำรอง1/2` (one is
+player.abyssplayer.com, which Cloudstream has no extractor for). The real animemami embed was fetched from the
+development network: Inertia `props.video.url` = `cdn2.maimeorder.com/hls/<id>.txt`, `type: direct`, JW player,
+exactly as implemented. The CDN itself still blocks the development network.
+
+Cause found in Cloudstream's DownloadManager: links are tried highest quality first, and a failure after more
+than 50 MB, or a run that completes with unusable bytes, counts as success (`DOWNLOAD_PARTIAL_SUCCESS` /
+`DOWNLOAD_SUCCESS`), so the fallback to the hooked "ดาวน์โหลด" link never happened. Version 3 ranks the hooked
+link first (the raw stream is now labelled "Auto"), skips leading PNG/WebP/JPEG/GIF images by their structure
+before scanning the whole segment for TS sync, and adds a memory-only `animeruka-debug` report (HTTP status,
+file signature and host per step; no URLs). Simulated with the real provider and Cloudstream's download logic
+for an unwrapped playlist with PNG-prefixed segments: hooked link chosen first, valid TS written, report shows
+each step. 11 AnimeRuka tests.
+
+---
+
 # AnimeRuka version 2 — downloads (2026-10-05)
 
 User report: AnimeRuka plays in the app but does not download. Cloudstream's downloader fetches with plain

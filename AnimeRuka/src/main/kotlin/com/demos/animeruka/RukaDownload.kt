@@ -30,6 +30,32 @@ internal object RukaDownload {
 
     class Served(val status: Int, val contentType: String, val body: ByteArray)
 
+    /** Memory-only report of the last download attempts: shapes and statuses, never URLs or bodies. */
+    private val events = ArrayDeque<String>()
+    fun note(text: String) = synchronized(events) {
+        events.addLast(text)
+        while (events.size > 24) events.removeFirst()
+    }
+    fun report(): String = synchronized(events) {
+        if (events.isEmpty()) "ยังไม่มีการดาวน์โหลดในรอบเปิดแอปนี้ ลองกดดาวน์โหลดก่อน แล้วค้นหา animeruka-debug อีกครั้ง"
+        else events.joinToString("\n")
+    }
+    @Volatile private var segmentsNoted = 0
+    private fun host(url: String) = try { URI(url).host.orEmpty() } catch (_: Exception) { "?" }
+    private fun signature(b: ByteArray): String = when {
+        b.isEmpty() -> "empty"
+        b[0] == 0x47.toByte() -> "TS"
+        String(b, 0, minOf(b.size, 16), Charsets.ISO_8859_1).trimStart().startsWith("#EXTM3U") -> "M3U8"
+        b.size >= 8 && String(b, 4, 4, Charsets.ISO_8859_1) in setOf("ftyp", "styp", "moof", "sidx") -> "MP4"
+        b.size >= 4 && (b[0].toInt() and 0xFF) == 0x89 && String(b, 1, 3, Charsets.ISO_8859_1) == "PNG" -> "PNG"
+        b.size >= 12 && String(b, 0, 4, Charsets.ISO_8859_1) == "RIFF" -> "RIFF/" + String(b, 8, 4, Charsets.ISO_8859_1)
+        b.size >= 2 && (b[0].toInt() and 0xFF) == 0xFF && (b[1].toInt() and 0xFF) == 0xD8 -> "JPEG"
+        b.size >= 4 && String(b, 0, 4, Charsets.ISO_8859_1) == "GIF8" -> "GIF"
+        String(b, 0, minOf(b.size, 16), Charsets.ISO_8859_1).trimStart().startsWith("<") -> "HTML"
+        String(b, 0, minOf(b.size, 16), Charsets.ISO_8859_1).trimStart().startsWith("{") -> "JSON"
+        else -> "other:" + b.take(4).joinToString("") { "%02x".format(it) }
+    }
+
     private fun encode(url: String) = Base64.getUrlEncoder().withoutPadding().encodeToString(url.toByteArray())
     private fun decode(token: String) = String(Base64.getUrlDecoder().decode(token))
 
@@ -102,18 +128,59 @@ internal object RukaDownload {
     }
 
     /**
-     * Segments are served with image extensions and may carry a small image in front of the
-     * transport stream. Drop everything before the first run of three TS sync bytes.
+     * Segments are served with image extensions and may carry a real image in front of the
+     * transport stream. Skip a leading PNG/WebP/JPEG/GIF by its own structure, then fall back to the
+     * first position where TS sync bytes repeat every 188 bytes.
      */
     fun cleanSegment(bytes: ByteArray): ByteArray {
         if (bytes.size >= 8 && String(bytes, 4, 4, Charsets.ISO_8859_1) in setOf("ftyp", "styp", "moof", "sidx")) return bytes
-        val limit = minOf(bytes.size - 377, 1 shl 20)
-        for (i in 0 until maxOf(limit, 0)) {
-            if (bytes[i] == 0x47.toByte() && bytes[i + 188] == 0x47.toByte() && bytes[i + 376] == 0x47.toByte()) {
-                return if (i == 0) bytes else bytes.copyOfRange(i, bytes.size)
+        fun synced(at: Int): Boolean {
+            if (at < 0 || at >= bytes.size || bytes[at] != 0x47.toByte()) return false
+            // Require every packet start we can see, up to five, to carry the sync byte.
+            var seen = 0
+            var p = at
+            while (p < bytes.size && seen < 5) {
+                if (bytes[p] != 0x47.toByte()) return false
+                p += 188
+                seen++
             }
+            return seen >= minOf(3, (bytes.size - at + 187) / 188)
         }
+        if (synced(0)) return bytes
+        imageEnd(bytes)?.let { end ->
+            (end until minOf(bytes.size, end + 188)).firstOrNull { synced(it) }?.let { return bytes.copyOfRange(it, bytes.size) }
+        }
+        for (i in 1 until bytes.size) if (synced(i) && bytes.size - i >= 376) return bytes.copyOfRange(i, bytes.size)
         return bytes
+    }
+
+    /** End offset of an image at the start of [b], or null when none is recognised. */
+    private fun imageEnd(b: ByteArray): Int? {
+        fun u8(i: Int) = b[i].toInt() and 0xFF
+        fun ascii(at: Int, text: String) = at + text.length <= b.size && String(b, at, text.length, Charsets.ISO_8859_1) == text
+        if (b.size >= 8 && u8(0) == 0x89 && ascii(1, "PNG")) {
+            var at = 8
+            while (at + 12 <= b.size) {
+                val length = (u8(at) shl 24) or (u8(at + 1) shl 16) or (u8(at + 2) shl 8) or u8(at + 3)
+                if (length < 0) return null
+                val type = String(b, at + 4, 4, Charsets.ISO_8859_1)
+                at += 12 + length
+                if (type == "IEND") return at
+            }
+            return null
+        }
+        if (ascii(0, "RIFF") && ascii(8, "WEBP")) {
+            val size = u8(4) or (u8(5) shl 8) or (u8(6) shl 16) or (u8(7) shl 24)
+            return (8 + size + (size and 1)).takeIf { size > 0 && it <= b.size }
+        }
+        if (b.size >= 4 && u8(0) == 0xFF && u8(1) == 0xD8) {
+            for (i in 2 until b.size - 1) if (u8(i) == 0xFF && u8(i + 1) == 0xD9) return i + 2
+            return null
+        }
+        if (ascii(0, "GIF8")) {
+            for (i in 6 until b.size) if (u8(i) == 0x3B && i + 1 < b.size && u8(i + 1) == 0x47) return i + 1
+        }
+        return null
     }
 
     fun serve(path: String, query: Map<String, String>, fetch: (String) -> Fetched): Served {
@@ -127,19 +194,30 @@ internal object RukaDownload {
             "p" -> {
                 var current = url
                 var response = fetch(current)
+                note("playlist ${host(current)}: HTTP ${response.status}, ${signature(response.body)}, ${response.body.size} B")
                 require(response.ok) { "Playlist: HTTP ${response.status}" }
                 var text = unwrap(response.body)
                 require(text.startsWith("#EXTM3U")) { "Not an HLS playlist" }
                 chooseVariant(current, text)?.let { variant ->
                     current = variant
                     response = fetch(current)
+                    note("variant ${host(current)}: HTTP ${response.status}, ${signature(response.body)}")
                     require(response.ok) { "Variant playlist: HTTP ${response.status}" }
                     text = unwrap(response.body)
                 }
+                val lines = text.lines()
+                note("segments=${lines.count { it.startsWith("#EXTINF") }} map=${lines.any { it.startsWith("#EXT-X-MAP") }} " +
+                    "key=${lines.any { it.startsWith("#EXT-X-KEY") && !it.contains("NONE") }} byterange=${lines.any { it.startsWith("#EXT-X-BYTERANGE") }} " +
+                    "hosts=${lines.filter { it.isNotBlank() && !it.startsWith("#") }.map { host(resolve(current, it)) }.distinct().take(3)}")
                 Served(200, "application/vnd.apple.mpegurl", rewrite(current, text).toByteArray())
             }
             "s" -> {
                 val response = fetch(url)
+                if (!response.ok || segmentsNoted < 3) {
+                    segmentsNoted++
+                    note("segment ${host(url)}: HTTP ${response.status}, ${signature(response.body)}, ${response.body.size} B" +
+                        if (response.ok && query["raw"] != "1") ", TS after cleaning=${cleanSegment(response.body).firstOrNull() == 0x47.toByte()}" else "")
+                }
                 require(response.ok) { "Segment: HTTP ${response.status}" }
                 val init = query["init"]?.let { fetch(decode(it)) }?.also { require(it.ok) { "Init: HTTP ${it.status}" } }?.body
                 val body = if (query["raw"] == "1") response.body else cleanSegment(response.body)
@@ -168,6 +246,7 @@ internal object RukaDownload {
             val served = try {
                 serve(request.url.encodedPath, query, chainFetch(chain))
             } catch (e: Exception) {
+                note("error: ${e.javaClass.simpleName}: ${e.message}")
                 Served(502, "text/plain", (e.message ?: "AnimeRuka download failed").toByteArray())
             }
             return Response.Builder()

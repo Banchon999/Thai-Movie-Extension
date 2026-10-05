@@ -106,6 +106,28 @@ class RukaDownloadTest {
         assertTrue(RukaDownload.serve(path(segment), query(segment), fetch).body.contentEquals(cipher))
     }
 
+    private fun png(payload: Int): ByteArray {
+        fun chunk(type: String, data: ByteArray) = byteArrayOf(
+            (data.size ushr 24).toByte(), (data.size ushr 16).toByte(), (data.size ushr 8).toByte(), data.size.toByte()) +
+            type.toByteArray() + data + ByteArray(4)
+        // Image data deliberately contains 0x47 bytes 188 apart so a naive scan would cut inside it.
+        val idat = ByteArray(payload) { if (it % 188 == 0) 0x47 else 0x10 }
+        return byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte(), 13, 10, 26, 10) +
+            chunk("IHDR", ByteArray(13)) + chunk("IDAT", idat) + chunk("IEND", ByteArray(0))
+    }
+
+    @Test
+    fun stripsLeadingImagesByTheirOwnStructure() {
+        // Larger than the 1 MB window the first version scanned.
+        assertTrue(RukaDownload.cleanSegment(png(1_200_000) + ts).contentEquals(ts))
+        val webpBody = ByteArray(300) { if (it % 188 == 0) 0x47 else 2 }
+        val webp = "RIFF".toByteArray() + byteArrayOf((webpBody.size + 4).toByte(), ((webpBody.size + 4) shr 8).toByte(), 0, 0) +
+            "WEBP".toByteArray() + webpBody
+        assertTrue(RukaDownload.cleanSegment(webp + ts).contentEquals(ts))
+        val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 1, 2, 3, 0xFF.toByte(), 0xD9.toByte())
+        assertTrue(RukaDownload.cleanSegment(jpeg + ts).contentEquals(ts))
+    }
+
     @Test
     fun cleanSegmentLeavesPlainStreamsAlone() {
         assertTrue(RukaDownload.cleanSegment(ts).contentEquals(ts))
