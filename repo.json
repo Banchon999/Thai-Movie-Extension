@@ -1,6 +1,6 @@
 {
-  "name": "DEMOS · 25-HD (ทดลอง)",
-  "description": "Cloudstream provider for 25-hd.com — experimental",
+  "name": "DEMOS · Thai (ทดลอง)",
+  "description": "Cloudstream providers for 25-hd.com and animeruka.com — experimental",
   "manifestVersion": 1,
   "pluginLists": [
     "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/plugins.json"

@@ -1,10 +1,34 @@
 [
     {
-        "jarFileSize": 265001,
-        "fileHash": "sha256-b0b55454db0c401b68ac5bb8bfb8e813f2478ba08d3e59fe2589adb388884fcf",
+        "jarFileSize": 118278,
+        "fileHash": "sha256-32aad129ee0ab214ea50d28087fd30eb294315b7f86ffc9eed009077cf1796b6",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/Banchon999/Thai-Movie-Extension",
-        "fileSize": 66573,
+        "fileSize": 32197,
+        "status": 3,
+        "language": "th",
+        "authors": [
+            "Banchon999"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie",
+            "OVA"
+        ],
+        "version": 1,
+        "internalName": "AnimeRuka",
+        "jarUrl": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/AnimeRuka.jar",
+        "description": "AnimeRuka \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e2d\u0e19\u0e34\u0e40\u0e21\u0e30\u0e1e\u0e32\u0e01\u0e22\u0e4c\u0e44\u0e17\u0e22/\u0e0b\u0e31\u0e1a\u0e44\u0e17\u0e22\u0e08\u0e32\u0e01 animeruka.com (\u0e15\u0e31\u0e27\u0e40\u0e25\u0e48\u0e19 animemami)",
+        "url": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/AnimeRuka.cs3",
+        "name": "AnimeRuka",
+        "jarHash": "sha256-d966901b0959307e4caf2ba5f06ea2b063ec2bbf7f0fcfc1798de076da39c1a1"
+    },
+    {
+        "jarFileSize": 397406,
+        "fileHash": "sha256-55b8cf461d2b758dc9f636fd4385ac5ae517a36829eb835684c77ed4e3f1f3de",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/Banchon999/Thai-Movie-Extension",
+        "fileSize": 104656,
         "status": 3,
         "language": "th",
         "authors": [
@@ -14,12 +38,12 @@
             "Movie",
             "TvSeries"
         ],
-        "version": 7,
+        "version": 8,
         "internalName": "TwentyFiveHD",
         "jarUrl": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.jar",
-        "description": "25-HD \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e2a\u0e48\u0e07\u0e04\u0e33\u0e02\u0e2d\u0e2a\u0e37\u0e48\u0e2d\u0e17\u0e35\u0e48\u0e40\u0e01\u0e15\u0e40\u0e27\u0e22\u0e4c ZMDB \u0e1b\u0e0f\u0e34\u0e40\u0e2a\u0e18 (403) \u0e44\u0e1b\u0e22\u0e31\u0e07\u0e40\u0e0b\u0e34\u0e23\u0e4c\u0e1f\u0e40\u0e27\u0e2d\u0e23\u0e4c CDN \u0e17\u0e35\u0e48 playlist \u0e23\u0e30\u0e1a\u0e38\u0e44\u0e27\u0e49 \u0e04\u0e49\u0e19\u0e2b\u0e32 25hd-debug \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39\u0e23\u0e32\u0e22\u0e07\u0e32\u0e19\u0e01\u0e32\u0e23\u0e40\u0e25\u0e48\u0e19",
+        "description": "25-HD \u0e17\u0e14\u0e25\u0e2d\u0e07 \u2014 \u0e14\u0e39\u0e41\u0e25\u0e30\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\u0e40\u0e01\u0e47\u0e1a\u0e44\u0e27\u0e49\u0e44\u0e14\u0e49 (\u0e40\u0e25\u0e37\u0e2d\u0e01\u0e25\u0e34\u0e07\u0e01\u0e4c \"\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e42\u0e2b\u0e25\u0e14\" \u0e15\u0e32\u0e21\u0e04\u0e27\u0e32\u0e21\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14) \u0e04\u0e49\u0e19\u0e2b\u0e32 25hd-debug \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e39\u0e23\u0e32\u0e22\u0e07\u0e32\u0e19\u0e01\u0e32\u0e23\u0e40\u0e25\u0e48\u0e19",
         "url": "https://raw.githubusercontent.com/Banchon999/Thai-Movie-Extension/builds/TwentyFiveHD.cs3",
         "name": "TwentyFiveHD",
-        "jarHash": "sha256-c701b431dcbef680eaa7bacf460d4163c6f665ea009bf2c1ef7028b52ac44899"
+        "jarHash": "sha256-9eee2b1323de1d1ff11e1c6ea6fa43d659e81fb6bd99b6ca49d9e762833c395c"
     }
 ]
