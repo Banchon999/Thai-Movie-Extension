@@ -7,7 +7,7 @@ internal class ZmdbClient(
     private val get: suspend (url: String, referer: String, headers: Map<String, String>) -> Response,
 ) {
     data class Response(val status: Int, val body: String)
-    data class Stream(val url: String, val referer: String, val server: String)
+    data class Stream(val url: String, val referer: String, val server: String, val videoId: String = "")
 
     private fun checked(response: Response, stage: String): String {
         require(response.status in 200..299) { "ZMDB $stage: HTTP ${response.status}" }
@@ -55,7 +55,7 @@ internal class ZmdbClient(
                 val video = try { ZmdbPayload.video(body) } catch (_: Exception) {
                     throw IllegalArgumentException("ZMDB: ไม่พบ data.hlsUrl ที่ใช้ได้")
                 }
-                streams.add(Stream(video.hlsUrl, embed, player.server))
+                streams.add(Stream(video.hlsUrl, embed, player.server, api.substringAfterLast('/')))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 failure = e.message ?: "ZMDB: โหลดข้อมูลวิดีโอไม่สำเร็จ"

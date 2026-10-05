@@ -55,6 +55,28 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.stage(self.root, "demo/repo", self.root / "dist")
 
+    def test_stages_every_published_plugin(self):
+        (self.root / "AnimeRuka/build").mkdir(parents=True)
+        second = self.root / "AnimeRuka/build/AnimeRuka.cs3"
+        with ZipFile(second, "w") as archive:
+            archive.writestr("classes.dex", b"dex\n035\x00synthetic test fixture")
+            archive.writestr("manifest.json", json.dumps({"pluginClassName": "com.demos.animeruka.AnimeRukaPlugin"}))
+        other = {
+            "url": "https://raw.githubusercontent.com/demo/repo/builds/AnimeRuka.cs3",
+            "fileSize": second.stat().st_size,
+            "fileHash": "sha256-" + hashlib.sha256(second.read_bytes()).hexdigest(),
+        }
+        (self.root / "build/plugins.json").write_text(json.dumps([self.entry, other]))
+        module.stage(self.root, "demo/repo", self.root / "dist")
+        self.assertTrue((self.root / "dist/TwentyFiveHD.cs3").exists())
+        self.assertTrue((self.root / "dist/AnimeRuka.cs3").exists())
+
+    def test_rejects_unknown_plugin_name(self):
+        self.entry["url"] = "https://raw.githubusercontent.com/demo/repo/builds/Other.cs3"
+        self.write_index()
+        with self.assertRaises(ValueError):
+            module.stage(self.root, "demo/repo", self.root / "dist")
+
     def test_rejects_invalid_repository(self):
         with self.assertRaises(ValueError):
             module.stage(self.root, "../a/b", self.root / "dist")

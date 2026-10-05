@@ -23,6 +23,20 @@ class TwentyFiveHDProvider : MainAPI() {
     override fun getVideoInterceptor(extractorLink: ExtractorLink): okhttp3.Interceptor =
         HlsGateway(diagnostics, extractorLink.url)
 
+    companion object {
+        /** Re-applied before each use: changing network settings in the app rebuilds the client. */
+        fun installDownloads() = synchronized(this) {
+            app.baseClient = ZmdbDownload.withHook(app.baseClient)
+        }
+
+        /** English names let Cloudstream match the user's subtitle-download languages. */
+        private fun subtitleLanguage(sub: ZmdbDownload.Rendition): String = when (sub.language.substringBefore('-').lowercase()) {
+            "th" -> "Thai"
+            "en" -> "English"
+            else -> sub.name.ifBlank { sub.language.ifBlank { "Subtitle" } }
+        }
+    }
+
     private val requestHeaders = mapOf(
         "User-Agent" to "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
         "Accept-Language" to "th-TH,th;q=0.9,en;q=0.7",
@@ -82,7 +96,7 @@ class TwentyFiveHDProvider : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         if (query.trim().equals("25hd-debug", ignoreCase = true)) {
-            return listOf(newMovieSearchResponse("25-HD v7 • รายงานการเล่น", "$diagnosticsUrl?report=${System.nanoTime()}", TvType.Movie))
+            return listOf(newMovieSearchResponse("25-HD v8 • รายงานการเล่น", "$diagnosticsUrl?report=${System.nanoTime()}", TvType.Movie))
         }
         if (query.isBlank()) return emptyList()
         val doc = fetch("$mainUrl/?s=${URLEncoder.encode(query.trim(), "UTF-8")}")
@@ -95,7 +109,7 @@ class TwentyFiveHDProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         if (url.substringBefore('?') == diagnosticsUrl) {
-            return newMovieLoadResponse("25-HD v7 • รายงานการเล่น", url, TvType.Movie, "") {
+            return newMovieLoadResponse("25-HD v8 • รายงานการเล่น", url, TvType.Movie, "") {
                 plot = diagnostics.report()
                 comingSoon = true
             }
@@ -165,11 +179,11 @@ class TwentyFiveHDProvider : MainAPI() {
         val emit: (ExtractorLink) -> Unit = { link -> if (sent.add(link.url)) callback(link) }
         val emitSubtitle: (SubtitleFile) -> Unit = { sub -> if (subtitles.add(sub.url)) subtitleCallback(sub) }
 
-        suspend fun direct(url: String, referer: String, label: String = "", type: ExtractorLinkType? = null) {
+        suspend fun direct(url: String, referer: String, label: String = "", type: ExtractorLinkType? = null, height: Int? = null) {
             emit(newExtractorLink(name, label.ifBlank { name }, url, type = type) {
                 this.referer = referer
                 headers = requestHeaders
-                quality = getQualityFromName(label)
+                quality = height ?: getQualityFromName(label)
             })
         }
 
@@ -186,10 +200,31 @@ class TwentyFiveHDProvider : MainAPI() {
             if (!visited.add(current.url)) continue
             try {
                 if (ZmdbPayload.isEmbed(current.url)) {
+                    installDownloads()
                     val streams = zmdb.resolve(current.url, current.referer, input.season, input.episode)
                     for (stream in streams) {
                         try {
-                            direct(stream.url, stream.referer, "ZMDB ${stream.server} • Auto", ExtractorLinkType.M3U8)
+                            // The master lists qualities and subtitles; playback still works without it.
+                            val master = try {
+                                val response = app.get(stream.url, headers = requestHeaders, referer = stream.referer, timeout = 25)
+                                if (response.code in 200..299) ZmdbDownload.parseMaster(stream.url, response.text) else null
+                            } catch (e: Exception) {
+                                if (e is CancellationException) throw e
+                                null
+                            }
+                            val heights = master?.downloadable?.map { it.height }?.filter { it > 0 }?.distinct()?.sortedDescending().orEmpty()
+                            direct(stream.url, stream.referer, "ZMDB ${stream.server} • Auto", ExtractorLinkType.M3U8, heights.firstOrNull())
+                            if (stream.videoId.isBlank() || master == null) continue
+                            // Cloudstream's downloader cannot use the adaptive master; these links serve one
+                            // muxed MPEG-TS stream per quality (all audio languages) and also play in the app.
+                            for (height in heights) {
+                                direct(ZmdbDownload.playlistUrl(stream.videoId, height), "",
+                                    "ZMDB ${stream.server} • ดาวน์โหลด ${height}p", ExtractorLinkType.M3U8, height)
+                            }
+                            master.subtitles.forEachIndexed { index, sub ->
+                                if (sub.forced) return@forEachIndexed
+                                emitSubtitle(newSubtitleFile(subtitleLanguage(sub), ZmdbDownload.subtitleUrl(stream.videoId, index)))
+                            }
                         } catch (e: Exception) {
                             if (e is CancellationException) throw e
                             lastFailure = e.message

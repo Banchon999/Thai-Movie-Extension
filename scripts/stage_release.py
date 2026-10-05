@@ -8,6 +8,9 @@ import shutil
 from urllib.parse import urlparse
 from zipfile import ZipFile
 
+# Gradle modules published from this repository; each builds <name>/build/<name>.cs3.
+PLUGINS = {"TwentyFiveHD", "AnimeRuka"}
+
 
 def stage(root: Path, repository: str, output: Path) -> None:
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
@@ -22,9 +25,10 @@ def stage(root: Path, repository: str, output: Path) -> None:
         if not url.startswith(prefix):
             raise ValueError("Plugin URL does not match this repository: " + url)
         filename = urlparse(url).path.rsplit("/", 1)[-1]
-        if filename != "TwentyFiveHD.cs3":
+        plugin = filename.removesuffix(".cs3")
+        if plugin not in PLUGINS or filename != plugin + ".cs3":
             raise ValueError("Unexpected plugin filename: " + filename)
-        source = root / "TwentyFiveHD/build" / filename
+        source = root / plugin / "build" / filename
         with ZipFile(source) as archive:
             if archive.testzip() is not None:
                 raise ValueError("Corrupt plugin archive")
@@ -43,9 +47,9 @@ def stage(root: Path, repository: str, output: Path) -> None:
                 raise ValueError("Compiled hash mismatch")
         artifacts.append(source)
         if entry.get("jarUrl"):
-            if entry["jarUrl"] != prefix + "TwentyFiveHD.jar":
+            if entry["jarUrl"] != prefix + plugin + ".jar":
                 raise ValueError("Unexpected JAR URL")
-            jar = root / "TwentyFiveHD/build/TwentyFiveHD.jar"
+            jar = root / plugin / "build" / (plugin + ".jar")
             if entry.get("jarFileSize") != jar.stat().st_size:
                 raise ValueError("JAR size mismatch")
             if entry.get("jarHash") != "sha256-" + hashlib.sha256(jar.read_bytes()).hexdigest():
@@ -57,8 +61,8 @@ def stage(root: Path, repository: str, output: Path) -> None:
         shutil.copy2(path, output / path.name)
     shutil.copy2(root / "build/plugins.json", output / "plugins.json")
     manifest = {
-        "name": "DEMOS · 25-HD (ทดลอง)",
-        "description": "Cloudstream provider for 25-hd.com — experimental",
+        "name": "DEMOS · Thai (ทดลอง)",
+        "description": "Cloudstream providers for 25-hd.com and animeruka.com — experimental",
         "manifestVersion": 1,
         "pluginLists": [prefix + "plugins.json"],
     }

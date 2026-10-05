@@ -1,10 +1,10 @@
-version = 7
+version = 8
 
 cloudstream {
-    description = "25-HD ทดลอง — ส่งคำขอสื่อที่เกตเวย์ ZMDB ปฏิเสธ (403) ไปยังเซิร์ฟเวอร์ CDN ที่ playlist ระบุไว้ ค้นหา 25hd-debug เพื่อดูรายงานการเล่น"
+    description = "25-HD ทดลอง — ดูและดาวน์โหลดเก็บไว้ได้ (เลือกลิงก์ \"ดาวน์โหลด\" ตามความละเอียด) ค้นหา 25hd-debug เพื่อดูรายงานการเล่น"
     authors = listOf("Banchon999")
     language = "th"
-    status = 3 // Beta: playlist and media HTTP verified against the live CDN; Android playback is not.
+    status = 3 // Beta: playback and the download pipeline verified against the live site on a JVM; not yet on a device.
     tvTypes = listOf("Movie", "TvSeries")
     isCrossPlatform = true
 }

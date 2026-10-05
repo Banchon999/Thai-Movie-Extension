@@ -1,3 +1,40 @@
+# Version 8 — downloads for 25-HD, new AnimeRuka provider (2026-10-05)
+
+## 25-HD downloads
+
+Cloudstream's downloader source (`DownloadManager.downloadHLS` → `M3u8Helper2.hslLazy`) was read first: it keeps
+only master variants without a separate audio URI, ignores `EXT-X-MAP`, concatenates segment bytes and fetches
+with plain `app.get` (no provider interceptor). ZMDB fails all three: separate audio renditions, fMP4 init
+segments, and media only on the steered CDN. Fix: per-quality "ดาวน์โหลด" links served by `ZmdbDownload.Hook`
+in the app's shared client, muxing fMP4 video + all audio renditions into MPEG-TS per segment (`Fmp4`, `TsMuxer`).
+
+Live verification (real ZMDB, plugin code on a JVM):
+
+| Check | Result |
+| --- | --- |
+| Real provider `loadLinks` (Cloudstream library on JVM), Scream 7 | Auto + 1080p/720p/360p download links, Thai + English subtitle files |
+| Cloudstream's own `hslLazy` on those links (Brothers 2026) | Auto rejected ("no video with audio") as predicted; 1080p and 720p links resolve 866 segments, first and last fetched |
+| 10 segments of Scream 7 720p concatenated as the downloader writes them | 40.1 s, H.264 + AAC `tha` + AAC `eng`, 0 decode errors, 0 continuity warnings |
+| Decoded frames vs original fMP4 (framemd5) | video 1000/1000, audio 1875/1875 per track identical |
+| Brothers ep 3, 360p, segments 0–3 + last (resume-like gaps) | valid, Thai audio tagged; subtitles 865 cues |
+| A/V offset | video starts 0.12 s after audio, exactly the source edit list (120 ms empty edit) |
+
+Unit tests: 54 Kotlin cases (6 new: init/fragment parsing, TS continuity across concatenated segments, PSI CRC,
+PTS/DTS from tfdt + edit list, ADTS, SPS/PPS on keyframes, full serve pipeline with gateway 403 / CDN 200).
+
+## AnimeRuka (version 1)
+
+animeruka.com, its stream CDN (cdn2.maimeorder.com) and archive/reader proxies all return a Cloudflare IP block
+to the development network, so no live page was available. The provider follows DooPlay markup and the
+contract recorded by the maintained scraper `natajrak/IPTV-Player/tools/fetch-animeruka.js` (Sep 2026).
+Verified live: animemami.xyz answers 403 without `Referer: https://animeruka.com/` and 404 for an unknown slug
+with it, matching that contract. The real provider was run on a JVM against a simulated site enforcing the
+documented rules (embed Referer, CDN Referer without Origin, base64-wrapped playlist): home, load (dub/sub
+split), player API, embed and stream link all resolved, and the interceptor unwrapped the playlist.
+5 parser tests. **Needs a device test in Thailand.**
+
+---
+
 # Live playback check — 2026-10-05 (published version 7, no code change)
 
 Question: does the published v7 build actually play? Each stage was replayed against the live sites
