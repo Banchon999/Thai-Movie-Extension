@@ -1,4 +1,4 @@
-version = 2
+version = 3
 
 cloudstream {
     description = "AnimeRuka ทดลอง — อนิเมะพากย์ไทย/ซับไทยจาก animeruka.com ดูและดาวน์โหลดเก็บไว้ได้"

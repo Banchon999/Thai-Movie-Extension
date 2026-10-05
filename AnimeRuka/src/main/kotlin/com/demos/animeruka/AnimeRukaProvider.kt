@@ -52,12 +52,23 @@ class AnimeRukaProvider : MainAPI() {
         return newHomePageResponse(HomePageList(request.name, cards.map { it.toSearch() }), hasNext = next != null)
     }
 
+    private val debugUrl = "$mainUrl/__animeruka_debug__"
+
     override suspend fun search(query: String): List<SearchResponse> {
+        if (query.trim().equals("animeruka-debug", ignoreCase = true)) {
+            return listOf(newMovieSearchResponse("AnimeRuka • รายงานดาวน์โหลด", "$debugUrl?r=${System.nanoTime()}", TvType.AnimeMovie))
+        }
         if (query.isBlank()) return emptyList()
         return RukaParser.cards(fetch("$mainUrl/?s=${URLEncoder.encode(query.trim(), "UTF-8")}")).map { it.toSearch() }
     }
 
     override suspend fun load(url: String): LoadResponse {
+        if (url.substringBefore('?') == debugUrl) {
+            return newMovieLoadResponse("AnimeRuka • รายงานดาวน์โหลด", url, TvType.AnimeMovie, "") {
+                plot = RukaDownload.report()
+                comingSoon = true
+            }
+        }
         val doc = fetch(url)
         val item = RukaParser.detail(doc) ?: throw ErrorLoadingException("ไม่พบชื่อเรื่องในหน้าเว็บ")
         val posterHeaders = requestHeaders + ("Referer" to "$mainUrl/")
@@ -117,17 +128,17 @@ class AnimeRukaProvider : MainAPI() {
                     if (player.code !in 200..299) throw ErrorLoadingException("animemami: HTTP ${player.code}")
                     val stream = RukaParser.streamFromEmbed(RukaParser.document(player.text, embed))
                         ?: throw ErrorLoadingException("animemami: ไม่พบ video.url")
-                    callback(newExtractorLink(name, "AnimeRuka • $label", stream, type = ExtractorLinkType.M3U8) {
-                        referer = streamReferer
-                        headers = requestHeaders
-                        quality = Qualities.Unknown.value
-                    })
-                    // Cloudstream's downloader skips the video interceptor; it falls back to this link,
-                    // which the download hook serves with the right Referer and an unwrapped playlist.
+                    // The downloader tries links highest quality first and stops at a partial or broken
+                    // "success", so the hooked link must rank above the raw stream (shown as "Auto").
                     installDownloads()
                     callback(newExtractorLink(name, "AnimeRuka • $label • ดาวน์โหลด", RukaDownload.playlistUrl(stream),
                         type = ExtractorLinkType.M3U8) {
                         quality = Qualities.Unknown.value
+                    })
+                    callback(newExtractorLink(name, "AnimeRuka • $label", stream, type = ExtractorLinkType.M3U8) {
+                        referer = streamReferer
+                        headers = requestHeaders
+                        quality = 0
                     })
                     found = true
                 } else if (loadExtractor(embed, data, subtitleCallback) { callback(it); found = true }) {
